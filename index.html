@@ -75,6 +75,14 @@
   .mod p{font-size:14px;color:#3a4150;margin-bottom:8px}
   .mod ul{margin:4px 0 8px 20px;font-size:14px;color:#3a4150}
   .mod ul li{margin-bottom:6px}
+  .mod ol.refs{margin:6px 0 8px 20px;font-size:13px;color:#3a4150;padding-left:20px}
+  .mod ol.refs li{margin-bottom:8px}
+  .mod ol.refs i{color:var(--muted)}
+  .mod ol.refs b{color:var(--ink)}
+  .th-note{margin:6px 0 10px;padding:8px 10px;background:var(--accent-soft);border-left:3px solid var(--accent);font-size:13px;color:#3a4150}
+  .th-link{font-size:13px;margin-top:4px;color:var(--muted)}
+  .th-link a{color:var(--accent);text-decoration:underline}
+  .th-link a:hover{color:#25507a}
   .rec-item{border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:6px;padding:12px 14px;margin-bottom:12px;background:#fbfcfe}
   .rec-item .r-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
   .rec-item .r-name{font-size:15px;font-weight:700;color:var(--ink)}
@@ -439,7 +447,190 @@ scm:{
 
 };
 
-/* ========== 1. 上下文关键词识别 ========== */
+/* ========== 0.5 经典理论基础与文献知识库 ========== */
+var THEORY_KB = {
+  human_capital:{
+    name:"人力资本理论",
+    rep:"Schultz、Becker、Mincer",
+    intro:"将教育、培训与健康视为个人对自身的投资，其回报体现为更高的劳动生产率与收入；是教育回报、工资决定、人力资本积累等研究的核心框架。",
+    keys:["人力资本","教育","学历","培训","受教育","教育回报","上学","教育投资","工资","收入"],
+    refs:[
+      {a:"Schultz, T. W.",y:1961,t:"Investment in Human Capital",j:"American Economic Review, 51(1)",c:"约 2.6 万次",f:"IF≈8.5"},
+      {a:"Becker, G. S.",y:1964,t:"Human Capital: A Theoretical and Empirical Analysis",j:"University of Chicago Press",c:"约 6.5 万次",f:"—"},
+      {a:"Mincer, J.",y:1974,t:"Schooling, Experience, and Earnings",j:"NBER / Columbia University Press",c:"约 2.2 万次",f:"—"},
+      {a:"Mankiw, N. G., Romer, D. & Weil, D. N.",y:1992,t:"A Contribution to the Empirics of Economic Growth",j:"Quarterly Journal of Economics, 107(2)",c:"约 4 万次",f:"IF≈9.0"},
+      {a:"Psacharopoulos, G.",y:1994,t:"Returns to Investment in Education: A Global Update",j:"World Development, 22(9)",c:"约 1.2 万次",f:"IF≈5.4"}
+    ]},
+  tpb:{
+    name:"计划行为理论（TPB）",
+    rep:"Ajzen、Fishbein",
+    intro:"认为行为意向由态度、主观规范与感知行为控制共同决定，是解释个体行为（消费、健康、环保、创业等）最常用的社会心理学理论。",
+    keys:["计划行为","行为意向","态度","主观规范","行为控制","意愿","行为"],
+    refs:[
+      {a:"Ajzen, I.",y:1991,t:"The Theory of Planned Behavior",j:"Organizational Behavior and Human Decision Processes, 50(2)",c:"约 8 万次",f:"IF≈7.0"},
+      {a:"Fishbein, M. & Ajzen, I.",y:1975,t:"Belief, Attitude, Intention and Behavior: An Introduction to Theory and Research",j:"Addison-Wesley",c:"约 5.5 万次",f:"—"},
+      {a:"Armitage, C. J. & Conner, M.",y:2001,t:"Efficacy of the Theory of Planned Behaviour: A Meta-Analytic Review",j:"British Journal of Social Psychology, 40(4)",c:"约 2.5 万次",f:"IF≈3.2"},
+      {a:"Ajzen, I.",y:2002,t:"Perceived Behavioral Control, Self-Efficacy, Locus of Control, and the Theory of Planned Behavior",j:"Journal of Applied Social Psychology, 32(4)",c:"约 1.3 万次",f:"IF≈2.5"},
+      {a:"Sheeran, P.",y:2002,t:"Intention-Behavior Relations: A Conceptual and Empirical Review",j:"European Review of Social Psychology, 12(1)",c:"约 7000 次",f:"IF≈5.3"}
+    ]},
+  tam:{
+    name:"技术接受模型（TAM / UTAUT）",
+    rep:"Davis、Venkatesh",
+    intro:"解释用户为何接受新技术：感知有用性与感知易用性决定使用态度与行为意向；是信息系统、数字化转型、AI/平台采纳研究的标准理论。",
+    keys:["技术接受","采纳","感知有用","感知易用","使用意愿","信息技术","数字化","平台","手机","app","人工智能","信息系统"],
+    refs:[
+      {a:"Davis, F. D.",y:1989,t:"Perceived Usefulness, Perceived Ease of Use, and User Acceptance of Information Technology",j:"MIS Quarterly, 13(3)",c:"约 8.5 万次",f:"IF≈7.6"},
+      {a:"Venkatesh, V. & Davis, F. D.",y:2000,t:"A Theoretical Extension of the Technology Acceptance Model: Four Longitudinal Field Studies",j:"Management Science, 46(2)",c:"约 3.6 万次",f:"IF≈5.9"},
+      {a:"Venkatesh, V., Morris, M. G., Davis, G. B. & Davis, F. D.",y:2003,t:"User Acceptance of Information Technology: Toward a Unified View",j:"MIS Quarterly, 27(3)",c:"约 6.5 万次",f:"IF≈7.6"},
+      {a:"Rogers, E. M.",y:2003,t:"Diffusion of Innovations (5th ed.)",j:"Free Press",c:"约 10 万次",f:"—"},
+      {a:"Davis, F. D., Bagozzi, R. P. & Warshaw, P. R.",y:1989,t:"User Acceptance of Computer Technology: A Comparison of Two Theoretical Models",j:"Management Science, 35(8)",c:"约 3.2 万次",f:"IF≈5.9"}
+    ]},
+  social_capital:{
+    name:"社会资本理论",
+    rep:"Bourdieu、Coleman、Putnam",
+    intro:"关注信任、规范与社会网络带来的资源与回报，广泛用于社会参与、求职、健康、社区治理与集体行动研究。",
+    keys:["社会资本","信任","社会网络","社会关系","社会参与","社区","邻里","朋友","人脉","互惠"],
+    refs:[
+      {a:"Bourdieu, P.",y:1986,t:"The Forms of Capital",j:"In Handbook of Theory and Research for the Sociology of Education",c:"约 8.5 万次",f:"—"},
+      {a:"Coleman, J. S.",y:1988,t:"Social Capital in the Creation of Human Capital",j:"American Journal of Sociology, 94 (Supplement)",c:"约 6.5 万次",f:"IF≈4.8"},
+      {a:"Putnam, R. D.",y:1993,t:"Making Democracy Work: Civic Traditions in Modern Italy",j:"Princeton University Press",c:"约 5 万次",f:"—"},
+      {a:"Granovetter, M. S.",y:1973,t:"The Strength of Weak Ties",j:"American Journal of Sociology, 78(6)",c:"约 7 万次",f:"IF≈4.8"},
+      {a:"Putnam, R. D.",y:2000,t:"Bowling Alone: The Collapse and Revival of American Community",j:"Simon & Schuster",c:"约 4 万次",f:"—"}
+    ]},
+  institutions:{
+    name:"制度理论（新制度经济学）",
+    rep:"North、Acemoglu、Rodrik",
+    intro:"认为制度（产权、契约执行、治理结构）是经济绩效与长期发展的根本决定因素；是制度变迁、营商环境、市场化改革类研究的理论基石。",
+    keys:["制度","产权","市场化","营商环境","治理","法治","正式制度","制度环境","制度变迁"],
+    refs:[
+      {a:"North, D. C.",y:1990,t:"Institutions, Institutional Change and Economic Performance",j:"Cambridge University Press",c:"约 8 万次",f:"—"},
+      {a:"Acemoglu, D., Johnson, S. & Robinson, J. A.",y:2001,t:"The Colonial Origins of Comparative Development: An Empirical Investigation",j:"American Economic Review, 91(5)",c:"约 2.6 万次",f:"IF≈8.5"},
+      {a:"Rodrik, D., Subramanian, A. & Trebbi, F.",y:2004,t:"Institutions Rule: The Primacy of Institutions over Geography and Integration in Economic Development",j:"Journal of Economic Growth, 9(2)",c:"约 6500 次",f:"IF≈3.1"},
+      {a:"Acemoglu, D. & Robinson, J. A.",y:2012,t:"Why Nations Fail: The Origins of Power, Prosperity, and Poverty",j:"Crown Business",c:"约 2 万次",f:"—"},
+      {a:"Besley, T. & Ghatak, M.",y:2010,t:"Property Rights and Economic Development",j:"Handbook of Development Economics, Vol. 5",c:"约 3000 次",f:"—"}
+    ]},
+  principal_agent:{
+    name:"委托代理理论",
+    rep:"Jensen & Meckling、Holmström",
+    intro:"研究委托人（股东/政府）与代理人（管理层/官员）之间因信息不对称产生的激励与监督问题，是企业治理、公共治理、官员激励研究的核心框架。",
+    keys:["委托代理","代理","激励","股权","管理层","高管","道德风险","逆向选择","监督","公司治理"],
+    refs:[
+      {a:"Jensen, M. C. & Meckling, W. H.",y:1976,t:"Theory of the Firm: Managerial Behavior, Agency Costs and Ownership Structure",j:"Journal of Financial Economics, 3(4)",c:"约 10 万次",f:"IF≈8.2"},
+      {a:"Holmström, B.",y:1979,t:"Moral Hazard and Observability",j:"Bell Journal of Economics, 10(1)",c:"约 1.5 万次",f:"IF≈—"},
+      {a:"Eisenhardt, K. M.",y:1989,t:"Agency Theory: An Assessment and Review",j:"Academy of Management Review, 14(1)",c:"约 2.2 万次",f:"IF≈13.7"},
+      {a:"Fama, E. F. & Jensen, M. C.",y:1983,t:"Separation of Ownership and Control",j:"Journal of Law and Economics, 26(2)",c:"约 1.8 万次",f:"IF≈2.9"},
+      {a:"Bertrand, M. & Mullainathan, S.",y:2003,t:"Enjoying the Quiet Life? Corporate Governance and Managerial Preferences",j:"Journal of Political Economy, 111(5)",c:"约 5000 次",f:"IF≈8.0"}
+    ]},
+  discrimination:{
+    name:"劳动力市场歧视理论",
+    rep:"Becker、Altonji & Blank",
+    intro:"解释基于性别、种族、户籍等身份的劳动力市场差异及其来源（偏好歧视、统计歧视），是就业与工资差异研究的理论基础。",
+    keys:["歧视","性别","种族","就业","招聘","雇佣","工资差异","劳动力市场","户籍"],
+    refs:[
+      {a:"Becker, G. S.",y:1957,t:"The Economics of Discrimination",j:"University of Chicago Press",c:"约 3.5 万次",f:"—"},
+      {a:"Bertrand, M. & Mullainathan, S.",y:2004,t:"Are Emily and Greg More Employable Than Lakisha and Jamal? A Field Experiment on Labor Market Discrimination",j:"American Economic Review, 94(4)",c:"约 1.6 万次",f:"IF≈8.5"},
+      {a:"Altonji, J. G. & Blank, R. M.",y:1999,t:"Race and Gender in the Labor Market",j:"Handbook of Labor Economics, Vol. 3",c:"约 6000 次",f:"—"},
+      {a:"Goldin, C.",y:2014,t:"A Grand Gender Convergence: Its Last Chapter",j:"American Economic Review, 104(4)",c:"约 3500 次",f:"IF≈8.5"},
+      {a:"Blau, F. D. & Kahn, L. M.",y:2017,t:"The Gender Wage Gap: Extent, Trends, and Explanations",j:"Journal of Economic Literature, 55(3)",c:"约 2500 次",f:"IF≈9.8"}
+    ]},
+  growth:{
+    name:"经济增长理论（索洛与新增长）",
+    rep:"Solow、Romer、Barro",
+    intro:"研究资本积累、技术进步与制度对长期增长的影响，宏观经济增长、收敛与生产率研究的基准框架。",
+    keys:["经济增长","经济发展","生产率","收敛","研发","创新","全要素生产率","资本积累"],
+    refs:[
+      {a:"Solow, R. M.",y:1956,t:"A Contribution to the Theory of Economic Growth",j:"Quarterly Journal of Economics, 70(1)",c:"约 5.5 万次",f:"IF≈9.0"},
+      {a:"Romer, P. M.",y:1990,t:"Endogenous Technological Change",j:"Journal of Political Economy, 98(5)",c:"约 3.8 万次",f:"IF≈8.0"},
+      {a:"Barro, R. J.",y:1991,t:"Economic Growth in a Cross Section of Countries",j:"Quarterly Journal of Economics, 106(2)",c:"约 1.6 万次",f:"IF≈9.0"},
+      {a:"Aghion, P. & Howitt, P.",y:1992,t:"A Model of Growth Through Creative Destruction",j:"Econometrica, 60(2)",c:"约 1.5 万次",f:"IF≈6.1"},
+      {a:"Lucas, R. E.",y:1988,t:"On the Mechanics of Economic Development",j:"Journal of Monetary Economics, 22(1)",c:"约 3 万次",f:"IF≈4.1"}
+    ]},
+  social_mobility:{
+    name:"社会分层与地位获得理论",
+    rep:"Blau & Duncan、Bourdieu",
+    intro:"研究家庭背景、教育与职业地位之间的关系及代际传递机制，是教育社会学、社会流动与教育获得研究的经典框架。",
+    keys:["社会分层","社会流动","代际","教育获得","职业地位","家庭背景","阶层","向上流动","精英"],
+    refs:[
+      {a:"Blau, P. M. & Duncan, O. D.",y:1967,t:"The American Occupational Structure",j:"Wiley",c:"约 2.3 万次",f:"—"},
+      {a:"Sewell, W. H., Haller, A. O. & Portes, A.",y:1969,t:"The Educational and Early Occupational Attainment Process",j:"American Sociological Review, 34(1)",c:"约 1 万次",f:"IF≈6.2"},
+      {a:"Bourdieu, P. & Passeron, J. C.",y:1977,t:"Reproduction in Education, Society and Culture",j:"Sage",c:"约 3 万次",f:"—"},
+      {a:"Shavit, Y. & Blossfeld, H. P.",y:1993,t:"Persistent Inequality: Changing Educational Attainment in Thirteen Countries",j:"Westview Press",c:"约 5000 次",f:"—"},
+      {a:"Chetty, R., Hendren, N., Kline, P. & Saez, E.",y:2014,t:"Where is the Land of Opportunity? The Geography of Intergenerational Mobility in the United States",j:"Quarterly Journal of Economics, 129(4)",c:"约 4500 次",f:"IF≈9.0"}
+    ]},
+  income_dist:{
+    name:"收入分配与不平等理论（库兹涅茨假说）",
+    rep:"Kuznets、Piketty",
+    intro:"研究经济增长、制度与政策如何影响收入分配格局，是收入不平等、财富集中、共同富裕议题的标准理论起点。",
+    keys:["收入分配","收入不平等","基尼","收入差距","贫富","财富","不平等"],
+    refs:[
+      {a:"Kuznets, S.",y:1955,t:"Economic Growth and Income Inequality",j:"American Economic Review, 45(1)",c:"约 2 万次",f:"IF≈8.5"},
+      {a:"Piketty, T.",y:2014,t:"Capital in the Twenty-First Century",j:"Harvard University Press",c:"约 1.5 万次",f:"—"},
+      {a:"Piketty, T. & Saez, E.",y:2003,t:"Income Inequality in the United States, 1913-1998",j:"Quarterly Journal of Economics, 118(1)",c:"约 8000 次",f:"IF≈9.0"},
+      {a:"Atkinson, A. B., Piketty, T. & Saez, E.",y:2011,t:"Top Incomes in the Long Run of History",j:"Journal of Economic Literature, 49(1)",c:"约 3500 次",f:"IF≈9.8"},
+      {a:"Ravallion, M.",y:2001,t:"Growth, Inequality and Poverty: Looking Beyond Averages",j:"World Development, 29(11)",c:"约 3000 次",f:"IF≈5.4"}
+    ]},
+  health:{
+    name:"健康资本与健康行为模型",
+    rep:"Grossman、Andersen",
+    intro:"将健康视为可投资的人力资本、并把就医行为置于多因素框架中理解，是健康经济学、医疗服务利用与健康行为研究的基础理论。",
+    keys:["健康","医疗","就医","医保","医疗保险","卫生","疾病","患病","体检","医疗支出"],
+    refs:[
+      {a:"Grossman, M.",y:1972,t:"On the Concept of Health Capital and the Demand for Health",j:"Journal of Political Economy, 80(2)",c:"约 1.6 万次",f:"IF≈8.0"},
+      {a:"Andersen, R. M.",y:1995,t:"Revisiting the Behavioral Model and Access to Medical Care: Does it Matter?",j:"Journal of Health and Social Behavior, 36(1)",c:"约 1.5 万次",f:"IF≈5.0"},
+      {a:"Rosenstock, I. M.",y:1974,t:"Historical Origins of the Health Belief Model",j:"Health Education Monographs, 2(4)",c:"约 1.3 万次",f:"IF≈—"},
+      {a:"Cutler, D. M., Deaton, A. S. & Lleras-Muney, A.",y:2006,t:"The Determinants of Mortality",j:"Journal of Economic Perspectives, 20(3)",c:"约 4500 次",f:"IF≈6.1"},
+      {a:"Finkelstein, A., Taubman, S., et al.",y:2012,t:"The Oregon Health Insurance Experiment: Evidence from the First Year",j:"Quarterly Journal of Economics, 127(3)",c:"约 2500 次",f:"IF≈9.0"}
+    ]},
+  peer:{
+    name:"同伴效应与社会互动理论",
+    rep:"Manski、Sacerdote",
+    intro:"研究个体行为如何受同群（同学、同事、邻里）行为与特征影响，是教育同伴效应、网络外部性与从众行为研究的核心框架。",
+    keys:["同伴","同侪","从众","模仿","同群","同学","同事","邻里","网络效应","周边"],
+    refs:[
+      {a:"Manski, C. F.",y:1993,t:"Identification of Endogenous Social Effects: The Reflection Problem",j:"Review of Economic Studies, 60(3)",c:"约 5500 次",f:"IF≈5.8"},
+      {a:"Sacerdote, B.",y:2001,t:"Peer Effects with Random Assignment: Results for Dartmouth Roommates",j:"Quarterly Journal of Economics, 116(2)",c:"约 3200 次",f:"IF≈9.0"},
+      {a:"Angrist, J. D.",y:2014,t:"The Perils of Peer Effects",j:"Labour Economics, 30",c:"约 1200 次",f:"IF≈2.1"},
+      {a:"Christakis, N. A. & Fowler, J. H.",y:2007,t:"The Spread of Obesity in a Large Social Network over 32 Years",j:"New England Journal of Medicine, 357(4)",c:"约 7000 次",f:"IF≈96"},
+      {a:"Zimmerman, D. J.",y:2003,t:"Peer Effects in Academic Outcomes: Evidence from a Natural Experiment",j:"Review of Economics and Statistics, 85(1)",c:"约 2000 次",f:"IF≈7.0"}
+    ]},
+  porter:{
+    name:"波特假说（环境规制与企业竞争力）",
+    rep:"Porter & van der Linde",
+    intro:"认为设计得当的环境规制可倒逼企业创新、部分抵消合规成本，是环境经济学、绿色转型与企业绩效研究的代表性理论。",
+    keys:["环境规制","环保","污染","排放","绿色","碳","能耗","环境","减排"],
+    refs:[
+      {a:"Porter, M. E. & van der Linde, C.",y:1995,t:"Toward a New Conception of the Environment-Competitiveness Relationship",j:"Journal of Economic Perspectives, 9(4)",c:"约 2.2 万次",f:"IF≈6.1"},
+      {a:"Jaffe, A. B. & Palmer, K.",y:1997,t:"Environmental Regulation and Innovation: A Panel Data Study",j:"Review of Economics and Statistics, 79(4)",c:"约 5000 次",f:"IF≈7.0"},
+      {a:"Ambec, S., Cohen, M. A., Elgie, S. & Lanoie, P.",y:2013,t:"The Porter Hypothesis at 20: Can Environmental Regulation Enhance Innovation and Competitiveness?",j:"Review of Environmental Economics and Policy, 7(1)",c:"约 2500 次",f:"IF≈4.7"},
+      {a:"Gray, W. B. & Shadbegian, R. J.",y:2003,t:"Plant Vintage, Technology, and Environmental Regulation",j:"Journal of Environmental Economics and Management, 46(3)",c:"约 1500 次",f:"IF≈5.3"},
+      {a:"Greenstone, M., List, J. A. & Syverson, C.",y:2012,t:"The Effects of Environmental Regulation on the Competitiveness of U.S. Manufacturing",j:"American Economic Review, 102(3)",c:"约 1600 次",f:"IF≈8.5"}
+    ]}
+};
+
+/* 匹配最适配的基础理论：对研究问题做关键词打分 */
+function matchTheory(q){
+  if(!q) return null;
+  var text = q.toLowerCase();
+  var bestKey = null, bestScore = 0, bestHits = [];
+  for(var key in THEORY_KB){
+    var t = THEORY_KB[key], score = 0, hits = [];
+    for(var i = 0; i < t.keys.length; i++){
+      if(text.indexOf(t.keys[i].toLowerCase()) > -1){ score += 2; hits.push(t.keys[i]); }
+    }
+    if(score > bestScore){ bestScore = score; bestKey = key; bestHits = hits; }
+  }
+  if(!bestKey) return null;
+  return { key: bestKey, score: bestScore, hits: bestHits };
+}
+function theoryConfidence(score){
+  if(score >= 12) return "高";
+  if(score >= 6) return "中";
+  return "低";
+}
+function cnkiUrlOf(q){
+  return "https://kns.cnki.net/kns8s/defaultresult/index?korder=SU&kw=" + encodeURIComponent((q || "").slice(0, 40));
+}
+
 function flags(ctx){
   var t = (ctx.question || "") + " " + (ctx.extra || "");
   return {
@@ -755,6 +946,31 @@ function render(ctx, misuses, rec){
   if(shown === 0) h += "<li>无推荐方法，暂无常见误区提示。</li>";
   h += '</ul></div>';
 
+  /* 模块 6：理论基础与权威文献推荐 */
+  var cnkiUrl = cnkiUrlOf(ctx.question);
+  var th = matchTheory(ctx.question);
+  h += '<div class="mod"><h3><span class="no">6</span> 📚 理论基础与权威文献推荐</h3>';
+  if(!th){
+    h += '<p>未能在研究问题中识别出明确的理论关键词。建议在问题中补充领域术语（如：教育、收入、健康、创新、社会资本、环境规制、同伴等），也可点击下方链接前往知网在线检索。</p>'
+      + '<p class="th-link">🔍 <a href="' + cnkiUrl + '" target="_blank" rel="noopener">前往知网检索该主题（在线）</a></p>';
+  } else {
+    var t = THEORY_KB[th.key];
+    var conf = theoryConfidence(th.score);
+    var pct = Math.min(96, 50 + th.score * 4);
+    h += '<div class="rec-item">'
+      + '<div class="r-top"><span class="r-name">' + esc(t.name) + '</span><span class="r-cat">理论匹配度 ' + pct + '/100 · 置信度' + conf + '</span></div>'
+      + '<div class="r-intro">代表人物：' + esc(t.rep) + '<br>' + esc(t.intro) + '</div>'
+      + '<div class="th-note">🎯 适配理由：研究问题中包含「' + esc(th.hits.join("、")) + '」等关键词，与「' + esc(t.name) + '」的核心关切一致，可作为论文的理论基础。</div>'
+      + '<h4>推荐文献（经典高被引文献）</h4><ol class="refs">';
+    t.refs.forEach(function(r){
+      h += '<li><b>' + esc(r.a) + '（' + r.y + '）</b>《' + esc(r.t) + '》，<i>' + esc(r.j) + '</i><br>被引：' + r.c + ' ｜ 影响因子：' + r.f + '</li>';
+    });
+    h += '</ol>'
+      + '<p class="th-link">🔍 <a href="' + cnkiUrl + '" target="_blank" rel="noopener">点击前往知网检索该主题的最新文献（在线）</a> · 被引量与影响因子为整理近似值，正式引用请以知网、Web of Science 为准。</p>'
+      + '</div>';
+  }
+  h += '</div>';
+
   h += '<div class="note">本工具仅为辅助参考，正式论文仍需结合前沿文献与审稿人意见进行最终判断。</div>';
 
   document.getElementById("results").innerHTML = h;
@@ -803,6 +1019,24 @@ function buildText(ctx, misuses, rec){
     KB[p.k].pits.forEach(function(pt){ if(shown < 5){ L.push("• " + pt); shown++; } });
   });
   if(shown === 0) L.push("暂无。");
+  L.push("");
+  L.push("六、理论基础与权威文献推荐");
+  var th = matchTheory(ctx.question);
+  if(!th){
+    L.push("未能从研究问题中识别出明确的理论关键词；建议补充领域术语后重试。");
+  } else {
+    var t = THEORY_KB[th.key];
+    L.push("• 匹配理论：" + t.name + "（置信度" + theoryConfidence(th.score) + "）");
+    L.push("  代表人物：" + t.rep);
+    L.push("  核心主张：" + t.intro);
+    L.push("  命中关键词：" + th.hits.join("、"));
+    L.push("  推荐文献（经典高被引）：");
+    t.refs.forEach(function(r){
+      L.push("  [" + r.a + " (" + r.y + ")] " + r.t + ". " + r.j + "（被引" + r.c + "，影响因子" + r.f + "）");
+    });
+    L.push("  知网在线检索：" + cnkiUrlOf(ctx.question));
+    L.push("  （被引量与影响因子为整理近似值，正式引用请以知网、Web of Science 为准）");
+  }
   L.push("");
   L.push("备注：本工具仅为辅助参考，正式论文仍需结合文献与审稿人意见。");
   return L.join("\n");
