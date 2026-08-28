@@ -56,6 +56,16 @@
   .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
   .btn-mini{padding:5px 10px;font-size:12px;border-color:var(--line);background:#fff;color:var(--accent)}
   .btn-mini:hover{border-color:var(--accent)}
+  details.infer-box{margin-top:2px;border:1px dashed var(--line);border-radius:6px;padding:8px 10px}
+  details.infer-box summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--accent);user-select:none}
+  details.infer-box summary:hover{color:#25507a}
+  .infer-grid{display:flex;flex-direction:column;gap:10px;margin:8px 0 4px}
+  .infer-label{font-size:12px;font-weight:600;color:var(--muted);margin:6px 0 2px}
+  .infer-res{font-size:13px;margin-top:6px;padding:8px 10px;background:#f6f9fc;border:1px solid var(--line);border-radius:6px}
+  .infer-res .t{font-weight:700;color:var(--accent);margin-bottom:2px}
+  .infer-res .c{color:var(--muted);font-size:12.5px;margin-bottom:4px}
+  .infer-res .dim{color:#9aa3af}
+  .infer-res .fill{margin-top:4px}
   .result-placeholder{color:var(--muted);text-align:center;padding:60px 20px;font-size:14px}
   .result-placeholder .big{font-size:40px;margin-bottom:10px;opacity:.5}
   .mod{border:1px solid var(--line);border-radius:8px;background:var(--card);padding:18px 20px;margin-bottom:16px}
@@ -110,6 +120,34 @@
           <label>核心研究问题 <span class="req">*</span></label>
           <textarea id="f_question" rows="3" placeholder="例如：政策 A 是否影响个体 Y 结果？"></textarea>
           <div class="hint">一句话描述研究问题，尽量包含变量与情境</div>
+        </div>
+
+        <div class="field">
+          <label>🧭 变量类型智能识别 <span class="hint">（可选 · 自动判断连续/二元/有序/计数/多分类）</span></label>
+          <details class="infer-box" open>
+            <summary>填写变量名称与详细描述 → 自动识别测量类型并填入下方表单</summary>
+            <div class="infer-grid">
+              <div>
+                <div class="infer-label">自变量 X 名称</div>
+                <input type="text" id="i_xname" placeholder="如：treat">
+                <div class="infer-label">X 详细描述</div>
+                <textarea id="i_xdesc" rows="2" placeholder="如：处理状态，1 表示受最低工资政策影响，0 表示未受影响"></textarea>
+                <div id="i_xres"></div>
+              </div>
+              <div>
+                <div class="infer-label">因变量 Y 名称</div>
+                <input type="text" id="i_yname" placeholder="如：income">
+                <div class="infer-label">Y 详细描述</div>
+                <textarea id="i_ydesc" rows="2" placeholder="如：月收入，单位元，取值为非负实数"></textarea>
+                <div id="i_yres"></div>
+              </div>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-mini" id="btn_infer">自动识别类型</button>
+              <button class="btn btn-mini" id="btn_infer_clear">清空</button>
+            </div>
+            <div class="hint">识别结果为参考建议，最终以你的数据测量手册为准</div>
+          </details>
         </div>
 
         <div class="field">
@@ -513,6 +551,94 @@ function recommend(ctx, scores, misuseKeys){
   return {picks:picks, ranked:ranked};
 }
 
+/* ========== 变量类型智能识别（辅助功能） ========== */
+var INFER_RULES = [
+  {type:"binary",  w:10, kw:["是否","是/否","0/1","0-1","虚拟变量","哑变量","二分","二值","二元","处理组","对照组","干预组","干预状态","受政策","未受政策","0 表示","1 表示","0=未","1=是","男/女","性别","dummy","treatment","treat"]},
+  {type:"ordinal", w:10, kw:["等级","程度","满意度","满意","不同意","同意程度","频率","从不","偶尔","经常","总是","非常","比较满意","一般","不太","完全不","学历","小学","初中","高中","大学","研究生","排名","次序","顺序","李克特","likert","高/中/低","低/中/高","强烈","中立"]},
+  {type:"count",   w:10, kw:["次数","个数","件数","访视","住院次数","孩子数量","子女数","专利数","出版物数","论文数","事故次数","发病次数","生育数","计数","非负整数","整数"]},
+  {type:"multi",   w:9,  kw:["类别","类型","职业","行业","地区","省份","城市","民族","党派","专业","品牌","颜色","居住地","户籍","婚姻状况","无序","名义变量","类别变量","category","sector"]},
+  {type:"continuous", w:9, kw:["分数","得分","金额","收入","工资","价格","支出","年龄","身高","体重","距离","时长","年限","年份","GDP","百分比","比例","汇率","数值","小数","连续","测量值","均值","收益率","增长率","规模","公里","元","万元","度","米","公斤"]}
+];
+
+function inferType(name, desc){
+  var t = ((name || "") + " " + (desc || "")).toLowerCase();
+  if(!t.replace(/\s/g, "")) return null;
+  var ranked = [];
+  INFER_RULES.forEach(function(r){
+    var s = 0, hits = [];
+    r.kw.forEach(function(k){
+      if(t.indexOf(k.toLowerCase()) !== -1){ s += r.w; hits.push(k); }
+    });
+    ranked.push({type:r.type, s:s, hits:hits});
+  });
+  ranked.sort(function(a,b){ return b.s - a.s; });
+  var top = ranked[0];
+  if(top.s === 0) return {type:null, score:0, hits:[]};
+  var second = ranked[1];
+  return {
+    type: top.type,
+    score: top.s,
+    hits: top.hits,
+    ambiguous: (second.s > 0 && (top.s - second.s) <= 3) ? second.type : null
+  };
+}
+
+function confidenceLabel(s){
+  if(s >= 30) return "置信度高";
+  if(s >= 15) return "置信度中";
+  if(s >= 5)  return "置信度较低";
+  return "线索不足";
+}
+
+function mapXType(type){
+  if(type === "continuous") return {v:"continuous", note:"连续变量"};
+  if(type === "binary")     return {v:"group2", note:"分组二分处理（处理/对照）"};
+  if(type === "multi")      return {v:"groupk", note:"多分类分组"};
+  if(type === "ordinal")    return {v:null, note:"有序分类变量，请按研究设计选择（可作连续变量或转为分组）"};
+  if(type === "count")      return {v:"continuous", note:"计数变量，通常按连续变量处理（右偏时可取对数）"};
+  return {v:null, note:"—"};
+}
+
+function inferView(target, nameId, descId, kind){
+  var name = document.getElementById(nameId).value.trim();
+  var desc = document.getElementById(descId).value.trim();
+  var el = document.getElementById(target);
+  if(!name && !desc){ el.innerHTML = '<div class="c dim">请先输入变量名称或详细描述</div>'; return; }
+  var r = inferType(name, desc);
+  if(!r || r.type === null){
+    el.innerHTML = '<div class="t">无法自动判断</div><div class="c">请补充更具体的描述（取值方式、单位、例子等），或按数据手册手动选择类型。</div>';
+    return;
+  }
+  var h = '<div class="t">推断类型：' + YN[r.type] + '</div>'
+    + '<div class="c">' + confidenceLabel(r.score) + '（命中线索：' + (r.hits.length ? r.hits.join("、") : "变量命名") + '）</div>';
+  if(r.ambiguous) h += '<div class="c">⚠️ 与「' + YN[r.ambiguous] + '」存在歧义，请结合测量手册确认。</div>';
+  if(kind === "y"){
+    h += '<button class="btn btn-mini fill" data-act="fill" data-kind="y" data-val="' + r.type + '">填入 Y 类型</button>';
+  } else {
+    var xm = mapXType(r.type);
+    h += '<div class="c">对应 X 表单选项：<b>' + xm.note + '</b></div>';
+    if(xm.v) h += '<button class="btn btn-mini fill" data-act="fill" data-kind="x" data-val="' + xm.v + '">填入 X 类型</button>';
+  }
+  el.innerHTML = h;
+}
+
+function runInfer(){
+  inferView("i_xres", "i_xname", "i_xdesc", "x");
+  inferView("i_yres", "i_yname", "i_ydesc", "y");
+}
+function clearInfer(){
+  ["i_xname","i_xdesc","i_yname","i_ydesc"].forEach(function(id){ document.getElementById(id).value = ""; });
+  document.getElementById("i_xres").innerHTML = "";
+  document.getElementById("i_yres").innerHTML = "";
+}
+function fillInfer(e){
+  var btn = e.target;
+  if(!btn || btn.getAttribute("data-act") !== "fill") return;
+  if(btn.getAttribute("data-kind") === "y") document.getElementById("f_y").value = btn.getAttribute("data-val");
+  else document.getElementById("f_x").value = btn.getAttribute("data-val");
+  btn.textContent = "已填入 ✓";
+}
+
 /* ========== 5. 工具函数 ========== */
 function esc(s){
   return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
@@ -719,6 +845,10 @@ function fillExample(){
     + '对 15 种量化/计量方法逐一评分（0-100）并给出推荐、理由与操作步骤。</div>';
   document.getElementById("btn_run").addEventListener("click", run);
   document.getElementById("btn_example").addEventListener("click", fillExample);
+  document.getElementById("btn_infer").addEventListener("click", runInfer);
+  document.getElementById("btn_infer_clear").addEventListener("click", clearInfer);
+  document.getElementById("i_xres").addEventListener("click", fillInfer);
+  document.getElementById("i_yres").addEventListener("click", fillInfer);
 })();
 </script>
 </body>
