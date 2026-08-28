@@ -106,6 +106,12 @@
   .result-head h2{font-size:17px;color:var(--accent)}
   .meta-line{font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.9}
   .meta-line b{color:#3a4150}
+  .paradigm{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:13.5px;line-height:2}
+  .paradigm b{font-size:14px;padding:1px 8px;border-radius:4px}
+  .paradigm .p-quant{color:#1b5ea0;background:var(--accent-soft)}
+  .paradigm .p-qual{color:#8a4a1f;background:#f6efe4}
+  .paradigm .p-mixed{color:#6b5a12;background:#fbf6e0}
+  .paradigm .p-sub{font-size:12.5px;color:var(--muted)}
   @media (max-width:920px){
     .wrap{flex-direction:column}
     .form-col{flex:1;max-width:none;width:100%}
@@ -740,6 +746,35 @@ function matchQual(q){
   return res.slice(0, 3);
 }
 
+/* ========== 0.7 研究范式判定（定量 / 定性 / 混合） ========== */
+var QUANT_KW = ["影响","效应","相关","回归","显著","假设","变量","政策","因果","差异","检验","统计","样本","数据","模型","系数","概率","测量","实验","干预","比例","增长","平均","得分","关系","回归分析"];
+var QUAL_KW = ["访谈","案例","田野","叙事","话语","意义","体验","理解","扎根","民族志","观察","机制","文化","故事","文本","现象","过程","感受","主观","视角","探究","探索","深描","质性"];
+function judgeParadigm(q){
+  var text = q || "";
+  var qn = [], ql = [], i;
+  for(i = 0; i < QUANT_KW.length; i++){ if(text.indexOf(QUANT_KW[i]) > -1) qn.push(QUANT_KW[i]); }
+  for(i = 0; i < QUAL_KW.length; i++){ if(text.indexOf(QUAL_KW[i]) > -1) ql.push(QUAL_KW[i]); }
+  if(ql.length > qn.length && ql.length >= 2) return { kind: "qual", qn: qn, ql: ql };
+  if(qn.length > ql.length && qn.length >= 2) return { kind: "quant", qn: qn, ql: ql };
+  return { kind: "mixed", qn: qn, ql: ql };
+}
+function paradigmBar(pd){
+  var hits = pd.kind === "quant" ? pd.qn : pd.ql;
+  var label, cls, sub;
+  if(pd.kind === "quant"){
+    label = "定量研究主导"; cls = "p-quant";
+    sub = "本选题以变量关系与效应估计为主，将优先推荐定量/计量方法；定性方法作为补充参考。";
+  } else if(pd.kind === "qual"){
+    label = "定性研究主导"; cls = "p-qual";
+    sub = "本选题以意义理解与深描为主，将优先匹配定性研究方法；定量方法作为备选参考。";
+  } else {
+    label = "混合设计 / 难以判定"; cls = "p-mixed";
+    sub = "定量与定性线索并存（定量线索 " + pd.qn.length + " 条，定性线索 " + pd.ql.length + " 条），适合混合方法（三角互证），以下两套方法均给出。";
+  }
+  return '<div class="paradigm">🎯 研究范式判定：<b class="' + cls + '">' + label + '</b>'
+    + '<br><span class="p-sub">' + (pd.kind === "mixed" ? sub : "命中线索：" + esc(hits.join("、")) + "。" + sub) + '</span></div>';
+}
+
 function flags(ctx){
   var t = (ctx.question || "") + " " + (ctx.extra || "");
   return {
@@ -985,6 +1020,7 @@ function run(){
 }
 
 function render(ctx, misuses, rec){
+  var pd = judgeParadigm(ctx.question);
   var picks = rec.picks;
   var hasCausalPick = picks.some(function(p){ return KB[p.k].cat === "causal"; });
   var needCausalWarn = ctx.goal === "causal" && !hasCausalPick && ctx.data !== "experiment";
@@ -993,17 +1029,25 @@ function render(ctx, misuses, rec){
   h += '<div class="result-head"><h2>分析结果</h2><button class="btn btn-mini" id="btn_copy">一键复制为纯文本</button></div>';
   h += '<div class="meta-line">研究问题：<b>' + esc(ctx.question) + '</b><br>因变量：<b>' + YN[ctx.y] + '</b> ｜ 自变量：<b>' + XN[ctx.x] + '</b> ｜ 研究目标：<b>' + GN[ctx.goal] + '</b> ｜ 数据结构：<b>' + DN[ctx.data] + '</b> ｜ 样本量：<b>' + (ctx.n ? ctx.n : "未填写") + '</b></div>';
 
-  /* 模块 1：优先推荐 */
-  h += '<div class="mod"><h3><span class="no">1</span> ✅ 优先推荐方法</h3>';
+  /* 范式判定：先判定定量/定性主导，再分别分析 */
+  h += paradigmBar(pd);
+  var isQualFirst = pd.kind === "qual";
+  var cnkiUrl = cnkiUrlOf(ctx.question);
+  var no = 0;
+  var sec = function(t){ no++; return '<h3><span class="no">' + no + '</span> ' + t + '</h3>'; };
+  var p1 = "", p2 = "", p3 = "", p4 = "", p5 = "", p6 = "", p7 = "";
+
+  /* 定量模块 1：优先推荐 */
+  p1 += '<div class="mod">' + sec(isQualFirst ? '✅ 定量方法（补充参考）' : '✅ 优先推荐方法');
   if(picks.length === 0){
-    h += '<p>当前输入组合下没有高度匹配的方法（得分均低于阈值）。建议：</p><ul>'
+    p1 += '<p>当前输入组合下没有高度匹配的方法（得分均低于阈值）。建议：</p><ul>'
       + '<li>核对变量类型与数据结构是否填写正确；</li>'
       + '<li>补充内生性、断点、选择偏误等关键信息；</li>'
       + '<li>重新审视研究设计，或咨询计量/统计专家。</li></ul>';
   } else {
     picks.forEach(function(p){
       var m = KB[p.k];
-      h += '<div class="rec-item">'
+      p1 += '<div class="rec-item">'
         + '<div class="r-top"><span class="r-name">' + esc(m.full) + '</span><span class="r-cat">' + CATN[m.cat] + '</span></div>'
         + '<div class="r-intro">' + esc(m.intro) + '</div>'
         + '<div class="score-label">匹配度 ' + p.s + ' / 100</div>'
@@ -1012,86 +1056,85 @@ function render(ctx, misuses, rec){
         + '</div>';
     });
   }
-  h += '</div>';
+  p1 += '</div>';
 
-  /* 模块 2：不建议选用 */
-  h += '<div class="mod"><h3><span class="no">2</span> ❌ 不建议选用方法</h3>';
+  /* 定量模块 2：不建议选用 */
+  p2 += '<div class="mod">' + sec('❌ 不建议选用方法');
   if(misuses.length === 0){
-    h += '<p>未发现明显的方法误用；仍需注意所选方法的适用前提与关键检验。</p>';
+    p2 += '<p>未发现明显的方法误用；仍需注意所选方法的适用前提与关键检验。</p>';
   } else {
     misuses.forEach(function(mu){
-      h += '<div class="bad"><span class="nm">' + esc(KB[mu.k].full) + '</span><span class="wy">' + esc(mu.r) + '</span></div>';
+      p2 += '<div class="bad"><span class="nm">' + esc(KB[mu.k].full) + '</span><span class="wy">' + esc(mu.r) + '</span></div>';
     });
   }
-  h += '</div>';
+  p2 += '</div>';
 
-  /* 模块 3：选择理由 */
-  h += '<div class="mod"><h3><span class="no">3</span> 📖 选择理由（论文方法论素材）</h3>';
-  picks.forEach(function(p){ h += '<p>' + esc(buildRationale(p.k, ctx)) + '</p>'; });
-  if(picks.length === 0) h += '<p>请补充研究设计信息后重新分析。</p>';
+  /* 定量模块 3：选择理由 */
+  p3 += '<div class="mod">' + sec('📖 选择理由（论文方法论素材）');
+  picks.forEach(function(p){ p3 += '<p>' + esc(buildRationale(p.k, ctx)) + '</p>'; });
+  if(picks.length === 0) p3 += '<p>请补充研究设计信息后重新分析。</p>';
   if(needCausalWarn){
-    h += '<div class="warn-note">⚠️ 提示：当前推荐以相关/组间比较为主；若论文目标为严格因果识别，建议补充准实验设计（DID、IV、RD、PSM、SCM 等）或寻找随机化数据来源。</div>';
+    p3 += '<div class="warn-note">⚠️ 提示：当前推荐以相关/组间比较为主；若论文目标为严格因果识别，建议补充准实验设计（DID、IV、RD、PSM、SCM 等）或寻找随机化数据来源。</div>';
   }
-  h += '</div>';
+  p3 += '</div>';
 
-  /* 模块 4：实操步骤 */
-  h += '<div class="mod"><h3><span class="no">4</span> 🛠️ 实操简要步骤（Stata / R）</h3>';
+  /* 定量模块 4：实操步骤 */
+  p4 += '<div class="mod">' + sec('🛠️ 实操简要步骤（Stata / R）');
   picks.forEach(function(p){
     var m = KB[p.k];
-    h += '<p><b>' + esc(m.full) + '</b></p>'
+    p4 += '<p><b>' + esc(m.full) + '</b></p>'
       + '<p><b>Stata 操作流程：</b></p><pre>' + esc(m.stata) + '</pre>'
       + '<p><b>R 操作流程：</b></p><pre>' + esc(m.r) + '</pre>'
       + '<p><b>关键检验：</b></p><ul>' + m.tests.map(function(t){ return "<li>" + esc(t) + "</li>"; }).join("") + '</ul>';
   });
-  if(picks.length === 0) h += '<p>无推荐方法，暂无可提供的操作步骤。</p>';
-  h += '</div>';
+  if(picks.length === 0) p4 += '<p>无推荐方法，暂无可提供的操作步骤。</p>';
+  p4 += '</div>';
 
-  /* 模块 5：常见误区 */
-  h += '<div class="mod"><h3><span class="no">5</span> ⚠️ 常见误区</h3><ul>';
+  /* 定量模块 5：常见误区 */
+  p5 += '<div class="mod">' + sec('⚠️ 常见误区') + '<ul>';
   var shown = 0;
   picks.forEach(function(p){
-    KB[p.k].pits.forEach(function(pt){ if(shown < 5){ h += "<li>" + esc(pt) + "</li>"; shown++; } });
+    KB[p.k].pits.forEach(function(pt){ if(shown < 5){ p5 += "<li>" + esc(pt) + "</li>"; shown++; } });
   });
-  if(shown === 0) h += "<li>无推荐方法，暂无常见误区提示。</li>";
-  h += '</ul></div>';
+  if(shown === 0) p5 += "<li>无推荐方法，暂无常见误区提示。</li>";
+  p5 += '</ul></div>';
 
   /* 模块 6：理论基础与权威文献推荐 */
-  var cnkiUrl = cnkiUrlOf(ctx.question);
   var th = matchTheory(ctx.question);
-  h += '<div class="mod"><h3><span class="no">6</span> 📚 理论基础与权威文献推荐</h3>';
+  p6 += '<div class="mod">' + sec('📚 理论基础与权威文献推荐');
   if(!th){
-    h += '<p>未能在研究问题中识别出明确的理论关键词。建议在问题中补充领域术语（如：教育、收入、健康、创新、社会资本、环境规制、同伴等），也可点击下方链接前往知网在线检索。</p>'
+    p6 += '<p>未能在研究问题中识别出明确的理论关键词。建议在问题中补充领域术语（如：教育、收入、健康、创新、社会资本、环境规制、同伴等），也可点击下方链接前往知网在线检索。</p>'
       + '<p class="th-link">🔍 <a href="' + cnkiUrl + '" target="_blank" rel="noopener">前往知网检索该主题（在线）</a></p>';
   } else {
     var t = THEORY_KB[th.key];
     var conf = theoryConfidence(th.score);
     var pct = Math.min(96, 50 + th.score * 4);
-    h += '<div class="rec-item">'
+    p6 += '<div class="rec-item">'
       + '<div class="r-top"><span class="r-name">' + esc(t.name) + '</span><span class="r-cat">理论匹配度 ' + pct + '/100 · 置信度' + conf + '</span></div>'
       + '<div class="r-intro">代表人物：' + esc(t.rep) + '<br>' + esc(t.intro) + '</div>'
       + '<div class="th-note">🎯 适配理由：研究问题中包含「' + esc(th.hits.join("、")) + '」等关键词，与「' + esc(t.name) + '」的核心关切一致，可作为论文的理论基础。</div>'
       + '<h4>推荐文献（经典高被引文献）</h4><ol class="refs">';
     t.refs.forEach(function(r){
-      h += '<li><b>' + esc(r.a) + '（' + r.y + '）</b>《' + esc(r.t) + '》，<i>' + esc(r.j) + '</i><br>被引：' + r.c + ' ｜ 影响因子：' + r.f + '</li>';
+      p6 += '<li><b>' + esc(r.a) + '（' + r.y + '）</b>《' + esc(r.t) + '》，<i>' + esc(r.j) + '</i><br>被引：' + r.c + ' ｜ 影响因子：' + r.f + '</li>';
     });
-    h += '</ol>'
+    p6 += '</ol>'
       + '<p class="th-link">🔍 <a href="' + cnkiUrl + '" target="_blank" rel="noopener">点击前往知网检索该主题的最新文献（在线）</a> · 被引量与影响因子为整理近似值，正式引用请以知网、Web of Science 为准。</p>'
       + '</div>';
   }
-  h += '</div>';
+  p6 += '</div>';
 
   /* 模块 7：定性研究方法匹配 */
   var quals = matchQual(ctx.question);
-  h += '<div class="mod"><h3><span class="no">7</span> 🎓 定性研究方法匹配</h3>';
+  p7 += '<div class="mod">' + sec(isQualFirst ? '🎓 推荐定性研究方法' : '🎓 定性研究方法匹配');
   if(quals.length === 0){
-    h += '<p>未能在选题中识别出定性方法线索。若选题偏探索性/理解性，建议在问题中加入「访谈、案例、文本、田野、话语、机制」等关键词后重试，也可点击下方链接前往知网检索质性研究范式。</p>'
+    p7 += '<p>未能在选题中识别出定性方法线索。若选题偏探索性/理解性，建议在问题中加入「访谈、案例、文本、田野、话语、机制」等关键词后重试，也可点击下方链接前往知网检索质性研究范式。</p>'
       + '<p class="th-link">🔍 <a href="' + cnkiUrl + '" target="_blank" rel="noopener">前往知网检索该选题（在线）</a></p>';
   } else {
-    h += '<p>基于选题文本匹配到的质性研究方法（按匹配度排序，可与定量方法三角互证）：</p>';
+    p7 += '<p>基于选题文本匹配到的质性研究方法（按匹配度排序' + (isQualFirst ? '' : '，可与定量方法三角互证') + '）：</p>';
     quals.forEach(function(qi){
       var m = QUAL_KB[qi.k];
       var pct = Math.min(96, 55 + qi.s * 5);
-      h += '<div class="rec-item">'
+      p7 += '<div class="rec-item">'
         + '<div class="r-top"><span class="r-name">' + esc(m.name) + '</span><span class="r-cat">匹配度 ' + pct + '/100</span></div>'
         + '<div class="r-intro">' + esc(m.intro) + '</div>'
         + '<div class="th-note">🎯 适配理由：选题包含「' + esc(qi.hits.join("、")) + '」等表述，与该方法适用情境一致。</div>'
@@ -1099,9 +1142,19 @@ function render(ctx, misuses, rec){
         + '<h4>实施要点</h4><ul class="pre">' + m.steps.map(function(s){ return "<li>" + esc(s) + "</li>"; }).join("") + '</ul>'
         + '</div>';
     });
-    h += '<p class="th-link">💡 提示：定性方法适合回答「如何、为何、意义」类问题；因果效应估计类问题仍以模块 1 的定量方法为准，定性与定量结合（混合方法）可增强论文说服力。</p>';
+    p7 += '<p class="th-link">💡 提示：定性方法适合回答「如何、为何、意义」类问题；若需估计因果效应，可结合定量方法进行混合设计（三角互证）增强说服力。</p>';
   }
-  h += '</div>';
+  p7 += '</div>';
+
+  /* 按范式排序：定性主导时先定性后定量；其余先定量后定性；理论模块恒置最后 */
+  if(isQualFirst){
+    h += p7;
+    h += p1 + p2 + p3 + p4 + p5;
+  } else {
+    h += p1 + p2 + p3 + p4 + p5;
+    h += p7;
+  }
+  h += p6;
 
   h += '<div class="note">本工具仅为辅助参考，正式论文仍需结合前沿文献与审稿人意见进行最终判断。</div>';
 
@@ -1113,79 +1166,106 @@ function render(ctx, misuses, rec){
 
 /* ========== 7. 纯文本输出（论文可粘贴） ========== */
 function buildText(ctx, misuses, rec){
+  var pd = judgeParadigm(ctx.question);
+  var isQualFirst = pd.kind === "qual";
   var L = [];
   L.push("【社科量化研究方法智能选型 · 分析结果】");
   L.push("研究问题：" + ctx.question);
   L.push("因变量：" + YN[ctx.y] + " ｜ 自变量：" + XN[ctx.x] + " ｜ 研究目标：" + GN[ctx.goal] + " ｜ 数据结构：" + DN[ctx.data] + " ｜ 样本量：" + (ctx.n ? ctx.n : "未填写"));
   L.push("");
-  L.push("一、优先推荐方法");
-  if(rec.picks.length === 0){ L.push("当前输入组合下无高度匹配的方法，请核对输入或咨询统计专家。"); }
-  rec.picks.forEach(function(p){
-    var m = KB[p.k];
-    L.push("• " + m.full + "（" + CATN[m.cat] + "，匹配度 " + p.s + "/100）");
-    L.push("  简介：" + m.intro);
-    L.push("  适用前提：" + m.pre.join("；"));
-  });
+  var pdLabel, pdDetail;
+  if(pd.kind === "quant"){ pdLabel = "定量研究主导"; pdDetail = "命中线索：" + pd.qn.join("、"); }
+  else if(pd.kind === "qual"){ pdLabel = "定性研究主导"; pdDetail = "命中线索：" + pd.ql.join("、"); }
+  else { pdLabel = "混合设计 / 难以判定"; pdDetail = "定量线索 " + pd.qn.length + " 条，定性线索 " + pd.ql.length + " 条，适合混合方法（三角互证）"; }
+  L.push("研究范式判定：" + pdLabel + "（" + pdDetail + "）");
   L.push("");
-  L.push("二、不建议选用方法");
-  if(misuses.length === 0){ L.push("未发现明显的方法误用；仍需注意所选方法的适用前提。"); }
-  misuses.forEach(function(mu){ L.push("• " + KB[mu.k].full + "：" + mu.r); });
-  L.push("");
-  L.push("三、选择理由");
-  rec.picks.forEach(function(p){ L.push(buildRationale(p.k, ctx)); });
-  L.push("");
-  L.push("四、实操简要步骤");
-  rec.picks.forEach(function(p){
-    var m = KB[p.k];
-    L.push("【" + m.full + "】");
-    L.push("Stata 操作流程：");
-    L.push(m.stata);
-    L.push("R 操作流程：");
-    L.push(m.r);
-    L.push("关键检验：" + m.tests.join("；"));
-  });
-  L.push("");
-  L.push("五、常见误区");
-  var shown = 0;
-  rec.picks.forEach(function(p){
-    KB[p.k].pits.forEach(function(pt){ if(shown < 5){ L.push("• " + pt); shown++; } });
-  });
-  if(shown === 0) L.push("暂无。");
-  L.push("");
-  L.push("六、理论基础与权威文献推荐");
-  var th = matchTheory(ctx.question);
-  if(!th){
-    L.push("未能从研究问题中识别出明确的理论关键词；建议补充领域术语后重试。");
-  } else {
-    var t = THEORY_KB[th.key];
-    L.push("• 匹配理论：" + t.name + "（置信度" + theoryConfidence(th.score) + "）");
-    L.push("  代表人物：" + t.rep);
-    L.push("  核心主张：" + t.intro);
-    L.push("  命中关键词：" + th.hits.join("、"));
-    L.push("  推荐文献（经典高被引）：");
-    t.refs.forEach(function(r){
-      L.push("  [" + r.a + " (" + r.y + ")] " + r.t + ". " + r.j + "（被引" + r.c + "，影响因子" + r.f + "）");
-    });
-    L.push("  知网在线检索：" + cnkiUrlOf(ctx.question));
-    L.push("  （被引量与影响因子为整理近似值，正式引用请以知网、Web of Science 为准）");
-  }
-  L.push("");
-  L.push("七、定性研究方法匹配");
+
+  var S = {}, i, j;
+  var secT = function(key, title){ S[key] = { t: title, c: [] }; };
+  var add = function(key, line){ S[key].c.push(line); };
+
+  /* 定性部分 */
+  secT("qual", isQualFirst ? "推荐定性研究方法" : "定性研究方法匹配");
   var quals = matchQual(ctx.question);
   if(quals.length === 0){
-    L.push("未识别出定性方法线索；若选题偏探索性/理解性，可补充访谈、案例、文本、田野、话语等关键词后重试。");
+    add("qual", "未识别出定性方法线索；若选题偏探索性/理解性，可补充访谈、案例、文本、田野、话语等关键词后重试。");
   } else {
     quals.forEach(function(qi){
       var m = QUAL_KB[qi.k];
-      L.push("• " + m.name + "（匹配度 " + Math.min(96, 55 + qi.s * 5) + "/100）");
-      L.push("  简介：" + m.intro);
-      L.push("  适用情境：" + m.fit);
-      L.push("  实施要点：" + m.steps.join("；"));
-      L.push("  命中关键词：" + qi.hits.join("、"));
+      add("qual", "• " + m.name + "（匹配度 " + Math.min(96, 55 + qi.s * 5) + "/100）");
+      add("qual", "  简介：" + m.intro);
+      add("qual", "  适用情境：" + m.fit);
+      add("qual", "  实施要点：" + m.steps.join("；"));
+      add("qual", "  命中关键词：" + qi.hits.join("、"));
     });
-    L.push("  提示：定性方法适合回答「如何、为何、意义」类问题；因果效应估计类问题仍以模块 1 的定量方法为准。");
+    add("qual", "  提示：定性方法适合回答「如何、为何、意义」类问题；若需估计因果效应，可结合定量方法进行混合设计（三角互证）。");
   }
-  L.push("");
+
+  /* 定量部分 */
+  secT("quant", isQualFirst ? "优先推荐方法（定量补充）" : "优先推荐方法");
+  if(rec.picks.length === 0){ add("quant", "当前输入组合下无高度匹配的方法，请核对输入或咨询统计专家。"); }
+  rec.picks.forEach(function(p){
+    var m = KB[p.k];
+    add("quant", "• " + m.full + "（" + CATN[m.cat] + "，匹配度 " + p.s + "/100）");
+    add("quant", "  简介：" + m.intro);
+    add("quant", "  适用前提：" + m.pre.join("；"));
+  });
+
+  secT("bad", "不建议选用方法");
+  if(misuses.length === 0){ add("bad", "未发现明显的方法误用；仍需注意所选方法的适用前提。"); }
+  misuses.forEach(function(mu){ add("bad", "• " + KB[mu.k].full + "：" + mu.r); });
+
+  secT("why", "选择理由");
+  rec.picks.forEach(function(p){ add("why", buildRationale(p.k, ctx)); });
+
+  secT("steps", "实操简要步骤");
+  rec.picks.forEach(function(p){
+    var m = KB[p.k];
+    add("steps", "【" + m.full + "】");
+    add("steps", "Stata 操作流程：");
+    add("steps", m.stata);
+    add("steps", "R 操作流程：");
+    add("steps", m.r);
+    add("steps", "关键检验：" + m.tests.join("；"));
+  });
+
+  secT("pits", "常见误区");
+  var shown = 0;
+  rec.picks.forEach(function(p){
+    KB[p.k].pits.forEach(function(pt){ if(shown < 5){ add("pits", "• " + pt); shown++; } });
+  });
+  if(shown === 0) add("pits", "暂无。");
+
+  /* 理论部分 */
+  secT("theory", "理论基础与权威文献推荐");
+  var th = matchTheory(ctx.question);
+  if(!th){
+    add("theory", "未能从研究问题中识别出明确的理论关键词；建议补充领域术语后重试。");
+  } else {
+    var t = THEORY_KB[th.key];
+    add("theory", "• 匹配理论：" + t.name + "（置信度" + theoryConfidence(th.score) + "）");
+    add("theory", "  代表人物：" + t.rep);
+    add("theory", "  核心主张：" + t.intro);
+    add("theory", "  命中关键词：" + th.hits.join("、"));
+    add("theory", "  推荐文献（经典高被引）：");
+    t.refs.forEach(function(r){
+      add("theory", "  [" + r.a + " (" + r.y + ")] " + r.t + ". " + r.j + "（被引" + r.c + "，影响因子" + r.f + "）");
+    });
+    add("theory", "  知网在线检索：" + cnkiUrlOf(ctx.question));
+    add("theory", "  （被引量与影响因子为整理近似值，正式引用请以知网、Web of Science 为准）");
+  }
+
+  /* 按范式排序输出 */
+  var order = isQualFirst
+    ? ["qual", "quant", "bad", "why", "steps", "pits", "theory"]
+    : ["quant", "bad", "why", "steps", "pits", "theory", "qual"];
+  var CN = ["一", "二", "三", "四", "五", "六", "七"];
+  for(i = 0; i < order.length; i++){
+    var s = S[order[i]];
+    L.push(CN[i] + "、" + s.t);
+    for(j = 0; j < s.c.length; j++){ L.push(s.c[j]); }
+    L.push("");
+  }
   L.push("备注：本工具仅为辅助参考，正式论文仍需结合文献与审稿人意见。");
   return L.join("\n");
 }
