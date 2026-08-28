@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>社科量化研究方法智能选型</title>
+<style>
+  :root{
+    --bg:#f4f5f7; --card:#ffffff; --line:#e2e5ea; --ink:#2b2f36; --muted:#6b7280;
+    --accent:#2e5c8a; --accent-soft:#e8eef5; --warn:#b3442e; --warn-soft:#f7ece8;
+    --ok:#3a7d5c; --ok-soft:#e9f1ec;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:-apple-system,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;
+    line-height:1.7; font-size:15px;
+  }
+  .container{max-width:1200px;margin:0 auto;padding:28px 20px 60px}
+  header.page-head{text-align:left;margin-bottom:6px}
+  header.page-head h1{
+    font-family:Georgia,"Songti SC","SimSun",serif;
+    font-size:24px; font-weight:700; color:var(--accent); letter-spacing:.5px;
+  }
+  header.page-head .sub{color:var(--muted);font-size:13px;margin-top:4px}
+  .banner{
+    margin:14px 0 22px; padding:10px 16px; border:1px solid #e7d8a8;
+    background:#fbf6e7; color:#7a6a2f; font-size:13px; border-radius:6px;
+  }
+  .wrap{display:flex;gap:24px;align-items:flex-start}
+  .form-col{flex:0 0 400px;max-width:400px}
+  .result-col{flex:1;min-width:0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:20px 22px}
+  .form-col .card{position:sticky;top:16px}
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:13px;font-weight:600;color:#3a4150;margin-bottom:6px}
+  .field label .req{color:var(--warn)}
+  .field .hint{font-size:12px;color:var(--muted);margin-top:4px}
+  textarea,input[type=text],input[type=number],select{
+    width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;
+    font-size:14px;font-family:inherit;background:#fcfcfd;color:var(--ink);
+  }
+  textarea:focus,input:focus,select:focus{outline:none;border-color:var(--accent);background:#fff}
+  textarea{resize:vertical}
+  .radios{display:flex;flex-direction:column;gap:6px}
+  .radios label{display:flex;align-items:center;gap:8px;font-weight:400;font-size:14px;cursor:pointer}
+  .radios input[type=radio]{accent-color:var(--accent);width:14px;height:14px}
+  .btn-row{display:flex;gap:10px;margin-top:6px}
+  .btn{
+    padding:9px 16px;border-radius:6px;font-size:14px;cursor:pointer;border:1px solid transparent;
+    font-family:inherit;transition:background .15s,border-color .15s;
+  }
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{background:#25507a}
+  .btn-ghost{background:#fff;border-color:var(--line);color:var(--ink)}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+  .btn-mini{padding:5px 10px;font-size:12px;border-color:var(--line);background:#fff;color:var(--accent)}
+  .btn-mini:hover{border-color:var(--accent)}
+  .result-placeholder{color:var(--muted);text-align:center;padding:60px 20px;font-size:14px}
+  .result-placeholder .big{font-size:40px;margin-bottom:10px;opacity:.5}
+  .mod{border:1px solid var(--line);border-radius:8px;background:var(--card);padding:18px 20px;margin-bottom:16px}
+  .mod h3{font-size:15px;font-weight:700;margin-bottom:12px;color:var(--ink);display:flex;align-items:center;gap:8px}
+  .mod h3 .no{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:4px;background:var(--accent-soft);color:var(--accent);font-size:12px;flex:none}
+  .mod p{font-size:14px;color:#3a4150;margin-bottom:8px}
+  .mod ul{margin:4px 0 8px 20px;font-size:14px;color:#3a4150}
+  .mod ul li{margin-bottom:6px}
+  .rec-item{border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:6px;padding:12px 14px;margin-bottom:12px;background:#fbfcfe}
+  .rec-item .r-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .rec-item .r-name{font-size:15px;font-weight:700;color:var(--ink)}
+  .rec-item .r-cat{font-size:12px;color:var(--accent);background:var(--accent-soft);padding:1px 8px;border-radius:10px;flex:none}
+  .rec-item .r-intro{font-size:13px;color:var(--muted);margin:6px 0 10px}
+  .scorebar{height:6px;background:#e9edf2;border-radius:3px;overflow:hidden;margin:4px 0 10px}
+  .scorebar i{display:block;height:100%;background:var(--accent);border-radius:3px}
+  .rec-item .score-label{font-size:12px;color:var(--muted)}
+  .rec-item h4{font-size:13px;font-weight:700;margin:10px 0 4px;color:#3a4150}
+  .rec-item .pre{font-size:13px;color:#4a5260;padding-left:16px}
+  .rec-item .pre li{margin-bottom:3px}
+  code,pre{font-family:Consolas,"Courier New",monospace;font-size:12.5px}
+  pre{background:#f6f7f9;border:1px solid var(--line);border-radius:6px;padding:10px 12px;overflow-x:auto;line-height:1.55;color:#2b2f36;margin:6px 0 10px}
+  pre .c{color:#7a8494}
+  .bad{display:flex;gap:8px;padding:8px 10px;border:1px solid #ecd9d2;background:var(--warn-soft);border-radius:6px;margin-bottom:8px;font-size:13.5px}
+  .bad .nm{font-weight:700;color:var(--warn);flex:none}
+  .bad .wy{color:#5a3a32}
+  .note{font-size:12.5px;color:#7a6a2f;background:#fbf6e7;border:1px solid #e7d8a8;border-radius:6px;padding:8px 12px;margin-top:10px}
+  .warn-note{font-size:12.5px;color:#5a3a32;background:var(--warn-soft);border:1px solid #ecd9d2;border-radius:6px;padding:8px 12px;margin-top:10px}
+  .result-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .result-head h2{font-size:17px;color:var(--accent)}
+  .meta-line{font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.9}
+  .meta-line b{color:#3a4150}
+  @media (max-width:920px){
+    .wrap{flex-direction:column}
+    .form-col{flex:1;max-width:none;width:100%}
+    .form-col .card{position:static}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header class="page-head">
+    <h1>社科量化研究方法智能选型</h1>
+    <div class="sub">面向社会科学博士研究者的量化/计量方法自动推荐工具 · 内置 15 种方法知识库</div>
+  </header>
+
+  <div class="banner">⚠️ 本工具仅为辅助参考，正式论文仍需结合前沿文献、研究设计约束与审稿人意见进行最终判断。</div>
+
+  <div class="wrap">
+    <div class="form-col">
+      <div class="card">
+        <div class="field">
+          <label>核心研究问题 <span class="req">*</span></label>
+          <textarea id="f_question" rows="3" placeholder="例如：政策 A 是否影响个体 Y 结果？"></textarea>
+          <div class="hint">一句话描述研究问题，尽量包含变量与情境</div>
+        </div>
+
+        <div class="field">
+          <label>因变量 Y 类型 <span class="req">*</span></label>
+          <select id="f_y">
+            <option value="continuous">连续数值</option>
+            <option value="binary">二元 0-1</option>
+            <option value="ordinal">有序分类</option>
+            <option value="count">计数数据</option>
+            <option value="multi">多分类（无序）</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>核心自变量 X 类型 <span class="req">*</span></label>
+          <select id="f_x">
+            <option value="group2">分组二分处理（处理/对照）</option>
+            <option value="continuous">连续变量</option>
+            <option value="policy">政策冲击 / 时间断点</option>
+            <option value="groupk">多分类分组</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>研究目标 <span class="req">*</span></label>
+          <div class="radios">
+            <label><input type="radio" name="goal" value="desc" checked> 侧重相关描述（变量间关联与预测）</label>
+            <label><input type="radio" name="goal" value="causal"> 追求因果效应识别（政策/干预效应）</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>数据结构 <span class="req">*</span></label>
+          <select id="f_data">
+            <option value="cross">横截面</option>
+            <option value="balPanel">平衡面板</option>
+            <option value="unbalPanel">非平衡面板</option>
+            <option value="repeat">重复截面</option>
+            <option value="experiment">实验数据（随机分组）</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>样本量大致规模</label>
+          <input type="number" id="f_n" min="1" placeholder="如 500（选填，影响小样本方法建议）">
+        </div>
+
+        <div class="field">
+          <label>可选补充信息</label>
+          <textarea id="f_extra" rows="3" placeholder="例如：是否存在内生性、选择偏误、遗漏变量；是否存在分数/收入等断点；是否单个试点地区等"></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btn_run">开始分析</button>
+          <button class="btn btn-ghost" id="btn_example">填入示例</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="result-col">
+      <div id="results"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ========== 常量：选项中文名 ========== */
+var YN = {continuous:"连续数值", binary:"二元 0-1", ordinal:"有序分类", count:"计数数据", multi:"多分类（无序）"};
+var XN = {group2:"分组二分处理（处理/对照）", continuous:"连续变量", policy:"政策冲击/时间断点", groupk:"多分类分组"};
+var DN = {cross:"横截面", balPanel:"平衡面板", unbalPanel:"非平衡面板", repeat:"重复截面", experiment:"实验数据（随机分组）"};
+var GN = {desc:"侧重相关描述", causal:"追求因果效应识别"};
+var CATN = {basic:"基础假设检验", reg:"回归建模", causal:"因果推断"};
+
+/* ========== 知识库：15 种方法 ==========
+   fit: 四维匹配度（0-1）
+     y  : 因变量类型匹配   x  : 自变量类型匹配
+     d  : 数据结构匹配     g  : 研究目标匹配
+   pre   : 适用前提
+   tests : 关键检验
+   pits  : 常见误区
+   stata / r : 操作步骤
+   rationale : 选择理由模板（{q}{y}{x}{d}{g} 占位符） */
+
+var KB = {
+
+/* 1. 卡方检验 */
+chisq:{
+  full:"卡方独立性检验（Chi-square Test）", cat:"basic",
+  intro:"检验两个分类变量之间是否存在统计关联，基于观察频数与期望频数的差异。",
+  fit:{y:{continuous:0.1,binary:0.95,ordinal:0.85,count:0.35,multi:0.95}, x:{group2:0.85,continuous:0.2,policy:0.35,groupk:1.0}, d:{cross:1.0,balPanel:0.25,unbalPanel:0.25,repeat:0.45,experiment:0.95}, g:{desc:1.0,causal:0.35}},
+  pre:["两变量均为分类（名义/有序）测量","各观测独立","期望频数一般要求 ≥5（不满足时用 Fisher 精确检验）","仅描述关联，不推断因果"],
+  stata:"tab X Y, chi2 row\n// row 显示行百分比，便于描述方向\n\ntab X Y, chi2 exact   // 小样本/期望频数不足时用精确检验\n\n* 效应量（Cramér's V）\nssc install tab_chi\ntab_chi X Y",
+  r:"tbl <- table(X, Y)\nchisq.test(tbl)\n# 期望频数不足 5 时\nfisher.test(tbl, simulate.p.value = TRUE)\n# 效应量 Cramér's V\nlibrary(vcd); assocstats(tbl)",
+  tests:["卡方统计量 χ² 与 p 值","期望频数检查（>20% 的单元格 <5 需谨慎）","Cramér's V 效应量","Fisher 精确检验（小样本）"],
+  pits:["不能用于连续因变量，会丢失大量信息","有显著关联 ≠ 有因果","类别过多导致单元格稀疏、检验功效下降","未报告效应量，仅报告 p 值","把有序变量的趋势信息当作无序处理"],
+  rationale:"针对研究问题「{q}」，因变量 {y} 与核心自变量 {x} 均为分类测量，研究目标为{g}。卡方独立性检验通过比较观察频数与期望频数的差异，检验两分类变量间是否存在统计关联，是列联表相关分析的标准方法；结合 Cramér's V 可度量关联强度。需注意该检验回答的是「是否相关」而非「为何相关」，在论文中应定位为描述性相关证据。"
+},
+
+/* 2. 独立样本 t 检验 */
+ttest:{
+  full:"独立样本 t 检验（Independent Samples t-test）", cat:"basic",
+  intro:"比较两个独立分组（如处理组/对照组）在连续因变量上的均值是否存在显著差异。",
+  fit:{y:{continuous:1.0,binary:0.1,ordinal:0.4,count:0.2,multi:0.1}, x:{group2:1.0,continuous:0.1,policy:0.45,groupk:0.3}, d:{cross:1.0,balPanel:0.35,unbalPanel:0.35,repeat:0.6,experiment:1.0}, g:{desc:1.0,causal:0.45}},
+  pre:["因变量为连续测量","两组样本独立（无配对/重复关系）","每组近似正态（大样本下稳健）","方差齐性（不满足时采用 Welch 修正）"],
+  stata:"* 方差齐性检验（Levene）\nrobvar Y, by(X)\n\n* 标准 t 检验\n.ttest Y, by(X)\n\n* 方差不齐时用 Welch 修正\n.ttest Y, by(X) unequal\n\n* 效应量 Cohen's d\n.estat esize",
+  r:"# Levene 方差齐性检验\ncar::leveneTest(Y ~ X)\n# 标准 t 检验\n.t.test(Y ~ X, data = d)\n# Welch 修正（默认 var.equal = FALSE）\n.t.test(Y ~ X, data = d, var.equal = FALSE)\n# 效应量\n.effectsize::cohens_d(Y ~ X, data = d)",
+  tests:["Levene/F 方差齐性检验","Shapiro-Wilk 正态性检验（小样本）","Cohen's d 效应量与 95% 置信区间","两组样本量与均值/中位数描述"],
+  pits:["显著 ≠ 效应大，需报告效应量","多次两两比较会膨胀一类错误","样本非独立（如同一批人前后测）时误用独立样本检验","方差严重不齐且未做 Welch 修正"],
+  rationale:"针对「{q}」，本研究比较 {x} 两个分组在连续因变量 {y} 上的均值差异。独立样本 t 检验将组间均值之差标准化为其标准误，在两组近似正态、方差齐性（否则用 Welch 修正）的假定下检验均值差是否显著异于零，是横截面/实验设计中两独立组均值比较的标准方法；论文中应同时报告均值、标准差、t 值、自由度与效应量。"
+},
+
+/* 3. 配对 t 检验 */
+paired:{
+  full:"配对样本 t 检验（Paired Samples t-test）", cat:"basic",
+  intro:"比较同一批个体在前后两次测量（或匹配对象）上连续变量的均值差异，消除个体间异质性。",
+  fit:{y:{continuous:1.0,binary:0.1,ordinal:0.35,count:0.2,multi:0.1}, x:{group2:0.6,continuous:0.1,policy:0.4,groupk:0.3}, d:{cross:0.2,balPanel:0.7,unbalPanel:0.6,repeat:0.9,experiment:0.75}, g:{desc:1.0,causal:0.4}},
+  pre:["因变量连续，且观测成对出现（前后测/匹配对象）","差值的分布近似正态","配对关系真实存在（同一对象或严格匹配）"],
+  stata:"* 宽格式：两列 Y1、Y2\ngen diff = Y2 - Y1\n.ttest diff = 0\n\n* 长格式（含变量 Time 与 id）\n.xtset id Time\n.xtreg Y i.Time, fe vce(cluster id)  // 等效于配对检验",
+  r:"t.test(Y1, Y2, paired = TRUE, data = d)\n# 或基于差值\n.t.test(Diff, mu = 0, data = d)\n# 差值非正态时的非参数版本\nwilcox.test(Y1, Y2, paired = TRUE, data = d)",
+  tests:["差值正态性检验","配对相关系数（干预前后关联）","Cohen's dz 效应量","配对缺失的处理说明"],
+  pits:["配对关系不存在时误用配对检验","前后设计无法排除时间趋势、成熟效应与回归均值效应","差值严重非正态仍用参数检验","只报告显著性不报告均值变化量"],
+  rationale:"研究设计涉及 {x} 维度的前后/配对比较，因变量 {y} 为连续测量。配对 t 检验基于同一对象两次测量（或匹配对象）的差值构造统计量，通过消除个体间固有差异提高检验功效，适用于「{q}」这类组内比较问题。需注意：前后设计本身不能排除时间趋势等替代解释，若目标是因果识别，应配合对照设计或准实验方法。"
+},
+
+/* 4. ANOVA */
+anova:{
+  full:"方差分析（ANOVA，Analysis of Variance）", cat:"basic",
+  intro:"比较三个及以上分组（或多因素组合）之间连续因变量的均值是否存在整体差异。",
+  fit:{y:{continuous:1.0,binary:0.1,ordinal:0.35,count:0.2,multi:0.1}, x:{group2:0.55,continuous:0.15,policy:0.3,groupk:1.0}, d:{cross:1.0,balPanel:0.3,unbalPanel:0.3,repeat:0.5,experiment:0.95}, g:{desc:0.95,causal:0.4}},
+  pre:["因变量连续","各组独立","各组近似正态、方差齐性","分组为三个及以上（两组时与 t 检验等价）"],
+  stata:"* 单因素方差分析 + 事后比较\n.oneway Y X, tabulate bonferroni\n\n* 多因素（含交互）\n.anova Y X1##X2\n\n* 事后两两比较\n.pwmean Y, over(X) mcompare(bonferroni)\n\n* 方差齐性检验\n.robvar Y, by(X)",
+  r:"m <- aov(Y ~ X, data = d)\nsummary(m)\n# 事后比较（Tukey HSD）\nTukeyHSD(m)\n# Welch 版（方差不齐）\noneway.test(Y ~ X, data = d)\n# 多因素\ncar::Anova(aov(Y ~ X1 * X2, data = d), type = 3)",
+  tests:["整体 F 检验","Levene/Bartlett 方差齐性检验","残差正态性","事后多重比较校正（Bonferroni/Tukey）","交互项显著性（多因素）"],
+  pits:["整体 F 显著不等于任意两组差异显著，需做事后比较","多重比较不校正","有序/分类因变量误用 ANOVA（等级≠等距）","方差不齐仍用传统 ANOVA"],
+  rationale:"自变量 {x} 将样本划分为多个分组，因变量 {y} 为连续测量。ANOVA 将总变异分解为组间与组内变异，通过 F 检验判断各组均值是否存在整体差异，显著后再以 Bonferroni 或 Tukey 等事后比较控制多重检验错误率，适合「{q}」中多组比较的研究设计。若因变量为有序分类，建议改用秩和检验或有序 logit。"
+},
+
+/* 5. 非参数检验 */
+nonpara:{
+  full:"非参数检验（Mann-Whitney U / Kruskal-Wallis）", cat:"basic",
+  intro:"基于秩次而非原始数值的比较检验，不依赖正态与方差齐性假定，适用于非正态、有序或小样本数据。",
+  fit:{y:{continuous:0.9,binary:0.45,ordinal:1.0,count:0.85,multi:0.5}, x:{group2:1.0,continuous:0.15,policy:0.4,groupk:0.7}, d:{cross:1.0,balPanel:0.3,unbalPanel:0.3,repeat:0.5,experiment:0.9}, g:{desc:1.0,causal:0.4}},
+  pre:["两组用 Mann-Whitney U，多组用 Kruskal-Wallis","数据非正态、偏态或有离群值","因变量为有序等级或右偏计数","样本独立"],
+  stata:"* 两组：Mann-Whitney U 检验\n.ranksum Y, by(X)\n\n* 多组：Kruskal-Wallis 检验\n.kwallis Y, by(X)\n\n* 有序趋势检验\n.nptrend Y, by(X)",
+  r:"# 两组（Mann-Whitney U）\nwilcox.test(Y ~ X, data = d)\n# 多组（Kruskal-Wallis）\nkruskal.test(Y ~ X, data = d)\n# 效应量\n.effectsize::rank_biserial(Y ~ X, data = d)",
+  tests:["U/H 统计量与 p 值","秩双列相关效应量（r = Z/√N）","中位数与四分位距的组间比较","大样本正态近似（连续校正）"],
+  pits:["检验的是分布位置（中位数）而非均值，报告要一致","忽略数值大小信息，功效低于参数检验","样本满足正态时仍用非参数会损失功效","只报告 p 值不报告中位数"],
+  rationale:"因变量 {y} 在 {x} 分组间的分布可能偏离正态（或为有序/计数测量），非参数检验基于秩次而非原始数值进行比较，不依赖正态与方差齐性假定。对「{q}」而言，当样本量较小、分布偏态或存在离群值时，Mann-Whitney U（两组）与 Kruskal-Wallis（多组）提供了更稳健的组间比较方案；报告时应以中位数与四分位距配合检验结果。"
+},
+
+/* 6. OLS 多元线性回归 */
+ols:{
+  full:"OLS 多元线性回归（Ordinary Least Squares）", cat:"reg",
+  intro:"建模连续因变量与多个自变量（连续/虚拟）之间的线性关系，估计边际效应并控制混杂变量。",
+  fit:{y:{continuous:1.0,binary:0.15,ordinal:0.3,count:0.25,multi:0.1}, x:{group2:0.9,continuous:1.0,policy:0.7,groupk:0.8}, d:{cross:1.0,balPanel:0.95,unbalPanel:0.9,repeat:0.85,experiment:0.95}, g:{desc:0.95,causal:0.65}},
+  pre:["因变量连续","自变量与因变量关系近似线性","残差独立","无严重多重共线性（VIF<10）","同方差（稳健标准误可放宽）"],
+  stata:"* 稳健标准误回归\n.reg Y X1 X2 i.X3, vce(robust)\n\n* 共线性诊断\n.estat vif\n\n* 异方差检验\n.estat hettest\n\n* 残差正态性\n.predict e, resid\n.swilk e\n\n* 面板数据的个体固定效应（若为面板）\n.xtset id time\n.xtreg Y X1 X2, fe vce(cluster id)",
+  r:"m <- lm(Y ~ X1 + X2 + factor(X3), data = d)\nsummary(m)\n# 共线性\ncar::vif(m)\n# 异方差检验\nlmtest::bptest(m)\n# 稳健标准误（HC1）\nlmtest::coeftest(m, vcov = sandwich::vcovHC(m, \"HC1\"))\n# 面板固定效应\nfixest::feols(Y ~ X1 + X2 | id + time, cluster = ~id, data = d)",
+  tests:["整体 F 检验与 R²","各系数 t 检验与置信区间","VIF 多重共线性","残差诊断（正态、异方差、异常值）","稳健标准误（HC1）"],
+  pits:["相关 ≠ 因果，OLS 无法自动处理遗漏变量","严重非线性关系误用线性设定","异常值与杠杆点过度影响估计","过度解读 R²（数据挖掘）","省略重要交互项"],
+  rationale:"研究问题「{q}」将连续因变量 {y} 与核心自变量 {x} 相联系，目标为{g}。OLS 多元线性回归在控制其他协变量的条件下估计 {x} 对 {y} 的偏效应，并可通过稳健标准误、VIF 诊断与残差检验保障推断质量。当数据为面板结构时，可扩展为个体固定效应模型以吸收不随时间变化的组间异质性。需在论文中明确：OLS 系数在{g}目标下应谨慎解释，因果性结论依赖额外的识别策略。"
+},
+
+/* 7. logit / probit */
+logit:{
+  full:"logit / probit 二元选择模型（Binary Choice Model）", cat:"reg",
+  intro:"建模二元因变量（0/1）发生概率与自变量的关系；logit 基于 logistic 分布，probit 基于正态分布。",
+  fit:{y:{continuous:0.1,binary:1.0,ordinal:0.4,count:0.3,multi:0.4}, x:{group2:0.9,continuous:0.95,policy:0.7,groupk:0.8}, d:{cross:1.0,balPanel:0.85,unbalPanel:0.8,repeat:0.8,experiment:0.9}, g:{desc:0.95,causal:0.7}},
+  pre:["因变量为二元 0/1","样本量不宜过小（经验：每参数至少 10 个「1」事件）","自变量间无严重共线性","观测独立"],
+  stata:"* logit 模型（稳健标准误）\n.logit Y X1 X2, vce(robust)\n\n* 平均边际效应（论文首选）\n.margins, dydx(*) atmeans\n\n* 拟合与判别\n.estat classification\n.lroc\n\n* probit 同理：probit Y X1 X2",
+  r:"m <- glm(Y ~ X1 + X2, family = binomial(link = \"logit\"), data = d)\nsummary(m)\n# 平均边际效应\nlibrary(margins); margins(m)\n# 共线性\ncar::vif(m)\n# 判别力 ROC\npROC::roc(d$Y, predict(m, type = \"response\"))\n# probit：family = binomial(link = \"probit\")",
+  tests:["系数 z 检验与置信区间","平均边际效应（AME）","McFadden R² / Hosmer-Lemeshow 拟合","分类正确率 / ROC-AUC","对数似然比检验"],
+  pits:["系数不能直接当作概率变化解释，须报告边际效应","小样本或稀有事件导致分离问题","未检查 logit 链接的线性性（Box-Tidwell）","把 R² 与 OLS 的 R² 直接比较","二元因变量误用 OLS 线性概率模型"],
+  rationale:"因变量 {y} 为二元 0/1 变量，采用 logit（或 probit）二元选择模型建模其发生概率与 {x} 的关系。logit 通过 logit 链接将概率映射到实数轴，避免线性概率模型的预测越界与异方差缺陷；系数以对数几率（log-odds）解释，论文中通常报告平均边际效应（AME）以呈现 {x} 对发生概率的直观影响，同时报告判别指标（ROC-AUC）作为模型质量的补充证据。"
+},
+
+/* 8. 有序 logit */
+ologit:{
+  full:"有序 logit / probit 模型（Ordered Logit/Probit）", cat:"reg",
+  intro:"建模有序分类因变量（如 1-5 满意度），基于潜变量框架与若干阈值，依赖平行线（比例优势）假设。",
+  fit:{y:{continuous:0.1,binary:0.15,ordinal:1.0,count:0.2,multi:0.2}, x:{group2:0.9,continuous:0.95,policy:0.7,groupk:0.8}, d:{cross:1.0,balPanel:0.8,unbalPanel:0.75,repeat:0.75,experiment:0.85}, g:{desc:0.95,causal:0.65}},
+  pre:["因变量为有序分类（等级间距不必相等）","比例优势（平行线）假设成立","样本量足够","自变量的效应随等级方向一致"],
+  stata:"* 有序 logit\n.ologit Y X1 X2, vce(robust)\n\n* 平行线假设检验\n.brant, detail\n\n* 各结果类别的边际效应\n.margins, dydx(*) predict(outcome(1))\n.margins, dydx(*) predict(outcome(2))\n\n* 平行线假设不成立时的广义模型\nssc install gologit2\n.gologit2 Y X1 X2, autofit",
+  r:"library(MASS)\nm <- polr(as.factor(Y) ~ X1 + X2, data = d, Hess = TRUE)\nsummary(m)\n# 平行线假设检验\nbrant::brant(m)\n# 累积概率边际效应\nlibrary(marginaleffects); avg_slopes(m)",
+  tests:["Brant 平行线（比例优势）检验","似然比检验与拟合信息","各阈值截距的显著性","各结果类别边际效应","广义有序模型稳健性"],
+  pits:["平行线假设不满足仍强用（改用 gologit/部分比例优势）","把有序变量当连续变量 OLS 回归","把有序变量的等级间距视为相等","只看方向不看各等级边际效应"],
+  rationale:"因变量 {y} 为有序分类测量，有序 logit 模型通过潜变量框架与多个阈值刻画有序结果，在平行线假设下估计 {x} 对各等级累积概率的影响。相比把有序变量当作连续变量的 OLS、或忽略其顺序性的多元 logit，有序 logit 更符合「{y}」的测量层次，并能报告每个结果类别的边际概率变化；论文中应检验平行线假设并考虑广义有序模型的稳健性。"
+},
+
+/* 9. 泊松回归 */
+poisson:{
+  full:"泊松回归 / 负二项回归（Poisson & Negative Binomial）", cat:"reg",
+  intro:"建模计数因变量（事件发生次数）与自变量的关系；泊松假设均值等于方差，过离散时用负二项。",
+  fit:{y:{continuous:0.15,binary:0.3,ordinal:0.2,count:1.0,multi:0.15}, x:{group2:0.85,continuous:0.95,policy:0.75,groupk:0.75}, d:{cross:1.0,balPanel:0.85,unbalPanel:0.8,repeat:0.8,experiment:0.85}, g:{desc:0.9,causal:0.6}},
+  pre:["因变量为非负整数（计数）","各事件观测近似独立","泊松要求均值≈方差；过离散用负二项","暴露期不同需加 offset(log(exposure))"],
+  stata:"* 泊松回归\n.poisson Y X1 X2, vce(robust)\n\n* 拟合优度 / 过离散检验\n.estat gof\n\n* 负二项回归（过离散时）\n.nbreg Y X1 X2, vce(robust)\n\n* 暴露期不同\n.poisson Y X1 X2, exposure(exposure_var) vce(robust)\n\n* 边际效应（发生率比）\n.margins, dydx(*) eform",
+  r:"m <- glm(Y ~ X1 + X2, family = poisson, data = d)\nsummary(m)\n# 过离散检验\nAER::dispersiontest(m)\n# 负二项\nMASS::glm.nb(Y ~ X1 + X2, data = d)\n# 暴露期不同\nm2 <- glm(Y ~ X1 + X2, offset = log(exposure), family = poisson, data = d)\n# 发生率比 IRR\n.exp(coef(m))",
+  tests:["过离散检验（dispersion ≈ 1）","拟合优度（残差偏差）","系数解释为发生率比 IRR = exp(β)","零膨胀检验（大量零值时用 ZINB）"],
+  pits:["过离散未处理（用负二项或稳健泊松）","暴露期不同未加 offset","计数数据直接用 OLS（产生负预测值）","零过多时未考虑零膨胀模型","把 IRR 误读为概率变化"],
+  rationale:"因变量 {y} 为计数数据（非负整数、右偏分布），泊松回归以 log 链接建模事件发生率的对数，系数指数化后为发生率比（IRR），刻画 {x} 每变化一个单位时事件发生率的变化倍数。当存在过离散（方差显著大于均值）时应采用负二项回归；若暴露期不同需加入 offset(log(exposure))。相比对计数数据的 OLS，泊松族模型避免了负预测值与分布误设问题。"
+},
+
+/* 10. 多元 logit */
+mlogit:{
+  full:"多元 logit 模型（Multinomial Logit）", cat:"reg",
+  intro:"建模无序多分类因变量的选择概率，以基准类别为参照估计各选项的相对风险比，依赖无关选择独立性（IIA）假设。",
+  fit:{y:{continuous:0.1,binary:0.2,ordinal:0.3,count:0.2,multi:1.0}, x:{group2:0.85,continuous:0.9,policy:0.6,groupk:0.9}, d:{cross:1.0,balPanel:0.7,unbalPanel:0.65,repeat:0.7,experiment:0.85}, g:{desc:0.9,causal:0.6}},
+  pre:["因变量为无序多分类","IIA 假设（增加/删减选项不影响相对概率）","样本量足够（每类别不宜过少）","各观测独立"],
+  stata:"* 多元 logit（base(1) 指定基准类别）\n.mlogit Y X1 X2, base(1) vce(robust)\n\n* IIA 检验\nssc install mlognet\n.mlogtest, iia\n\n* 相对风险比\n.mlogit Y X1 X2, base(1) rrr\n\n* 各结果类别的边际效应\n.margins, dydx(*) predict(outcome(2))",
+  r:"library(nnet)\nm <- multinom(as.factor(Y) ~ X1 + X2, data = d)\nsummary(m)\n# 显著性（似然比检验）\ncar::Anova(m)\n# 相对风险比 RRR\nexp(coef(m))\n# 预测概率\npredict(m, type = \"probs\")",
+  tests:["IIA 检验（Hausman-McFadden）","整体似然比检验","各选项系数与 RRR","预测概率与实际选择的校准"],
+  pits:["IIA 假设被违反（相邻类别替代时用嵌套/混合 logit）","各选项类别样本过少导致估计不稳定","基准类别选择影响系数的解读方向","把有序变量当无序多分类处理"],
+  rationale:"因变量 {y} 为多分类（无序）选择结果，多元 logit 模型以基准类别为参照，估计 {x} 对各选择类别相对概率的影响（相对风险比 RRR），是处理无序多分类因变量的标准工具。论文中需检验 IIA 假设，若类别间替代模式不符合 IIA，可考虑嵌套 logit 或多分类 probit；同时报告预测概率以保证模型的实际解释力。"
+},
+
+/* 11. DID 双重差分 */
+did:{
+  full:"双重差分法（DID，Difference-in-Differences）", cat:"causal",
+  intro:"利用处理组在政策前后的变化减去对照组同期变化的差值，识别政策对结果变量的平均处理效应（ATT）。",
+  fit:{y:{continuous:0.95,binary:0.8,ordinal:0.55,count:0.65,multi:0.3}, x:{group2:0.7,continuous:0.25,policy:1.0,groupk:0.3}, d:{cross:0.08,balPanel:1.0,unbalPanel:0.95,repeat:1.0,experiment:0.5}, g:{desc:0.5,causal:1.0}},
+  pre:["面板或重复截面数据（含政策前时期）","处理组与对照组（处理分配需外生或条件外生）","平行趋势假设（政策前两组结果趋势平行）","SUTVA：无组间溢出效应"],
+  stata:"* 标准双向固定效应 DID\n.xtset id time\n.xtreg Y i.post##i.treated, fe vce(cluster id)\n\n* 官方 didregress（Stata 17+）\n.didregress Y (X1) (treated), group(id) time(time) vce(cluster id)\n\n* 平行趋势检验（事件研究）\n.gen rel_time = time - treat_year if treated==1\n.xtreg Y ib(-1).rel_time##i.treated, fe vce(cluster id)\n\n* 交错处理（异质处理效应）\n.estat event, window(-4 4)  // didregress 之后",
+  r:"library(fixest)\n# 双向固定效应 DID\nm <- feols(Y ~ post * treated | id + time, cluster = ~id, data = d)\n# 事件研究 / 平行趋势\nm2 <- feols(Y ~ i(rel_time, treated, ref = -1) | id + time, cluster = ~id, data = d)\n# 交错处理的稳健估计（Callaway-Sant'Anna）\nlibrary(did)\natt_gt(yname = \"Y\", tname = \"time\", idname = \"id\",\n       gname = \"first_treat\", xformla = ~X1, data = d) |> aggte(type = \"dynamic\")",
+  tests:["平行趋势假设（事件研究图/趋势检验）","政策时点前后的安慰剂检验","交错处理下的异质处理效应（Callaway-Sant'Anna、CS-DID）","聚类标准误（聚类到个体或更高层）","共同时间冲击的排除"],
+  pits:["纯横截面数据不能做 DID（无时间维度）","平行趋势被违背仍强行解释","处理组存在溢出效应（SUTVA 违反）","交错处理时点下传统 TWFE 可能产生负权重偏误","聚类数过少（<40）时聚类标准误偏小"],
+  rationale:"研究问题「{q}」涉及 {x} 的政策冲击（处理），数据结构为{d}，目标为{g}。DID 通过处理组与对照组在政策实施前后结果变化之差构造反事实，同时消去不随时间变化的组间固定差异与共同的宏观时间趋势，在平行趋势假定下识别政策的平均处理效应。相较单一时间点的截面比较，DID 对政策评估的因果解释力显著更强；实证中应报告平行趋势检验（事件研究图）、聚类稳健标准误，并针对交错处理时点采用 Callaway-Sant'Anna 等稳健估计量。"
+},
+
+/* 12. RD 断点回归 */
+rd:{
+  full:"断点回归（RD，Regression Discontinuity）", cat:"causal",
+  intro:"当处理分配在某一可观测阈值的两侧发生跳跃时，利用阈值附近的局部随机化识别因果效应（局部平均处理效应 LATE）。",
+  fit:{y:{continuous:0.95,binary:0.85,ordinal:0.5,count:0.6,multi:0.3}, x:{group2:0.3,continuous:0.9,policy:0.75,groupk:0.2}, d:{cross:0.9,balPanel:0.85,unbalPanel:0.8,repeat:0.75,experiment:0.4}, g:{desc:0.45,causal:1.0}},
+  pre:["存在连续驱动变量与已知阈值（分数线/收入线/年龄等）","处理在阈值处发生跳跃（概率或确定性）","个体无法精确操纵驱动变量（no precise manipulation）","阈值附近的局部连续性"],
+  stata:"* 最优带宽与估计（rdrobust）\nssc install rdrobust\n.rdrobust Y X, c(0) p(1) bwselect(mserd)\n\n* 带宽选择\n.rdbwselect Y X, c(0)\n\n* 密度（操纵）检验 + 协变量平衡\n.rddensity X, c(0)\n.rdrobust Cov Z, c(0)",
+  r:"library(rdrobust)\n# 局部线性估计（MSE 最优带宽）\nrdrobust(Y ~ X, c = 0, p = 1, bwselect = \"mserd\", data = d)\n# 带宽选择\nrdbwselect(Y ~ X, c = 0, data = d)\n# 密度操纵检验（McCrary）\nrddensity(d$X, c = 0)\n# 协变量平衡安慰剂\nrdrobust(Z ~ X, c = 0, data = d)",
+  tests:["McCrary 密度连续性（操纵）检验","MSE 最优带宽与不同带宽/多项式稳健性","协变量在断点两侧的平衡检验","Donut-hole（剔除紧邻断点样本）稳健性","局部样本量检查（带宽内观测数）"],
+  pits:["个体能精确操纵驱动变量（如自报成绩）则识别失效","带宽过窄功效不足、过宽偏倚增大","高阶多项式争议（推荐局部线性 p=1）","RD 识别的是断点附近局部的 LATE，外推范围有限","把全样本处理效应当作 RD 结果"],
+  rationale:"处理分配在可观测驱动变量的阈值处发生跳跃，断点回归利用阈值附近的「局部随机化」，比较紧邻断点两侧个体结果的差异来识别因果效应。其识别逻辑对未观测混杂不敏感（只要个体无法精确操纵驱动变量），适合「{q}」中依托分数线/收入门槛/年龄界限等规则的场景；估计中应采用 MSE 最优带宽与局部线性拟合平衡偏倚与方差，并通过密度操纵检验与协变量平衡检验支撑内部效度。"
+},
+
+/* 13. IV 工具变量 */
+iv:{
+  full:"工具变量法（IV / 2SLS，Instrumental Variables）", cat:"causal",
+  intro:"当核心解释变量存在内生性时，利用满足相关性与外生性的工具变量提取外生变异，识别其对结果的因果效应（LATE）。",
+  fit:{y:{continuous:0.95,binary:0.85,ordinal:0.45,count:0.6,multi:0.25}, x:{group2:0.7,continuous:0.9,policy:0.65,groupk:0.5}, d:{cross:0.9,balPanel:0.85,unbalPanel:0.8,repeat:0.8,experiment:0.6}, g:{desc:0.35,causal:1.0}},
+  pre:["存在内生解释变量（遗漏变量/反向因果/测量误差）","工具变量与内生变量强相关（相关性条件）","工具变量外生性（排除限制，需理论论证，无法直接检验）","样本量足够（弱工具在小样本下偏倚更严重）"],
+  stata:"* 2SLS 估计\n.ivregress 2sls Y X1 (X2 = Z), vce(robust)\n\n* 第一阶段 F 统计量（弱工具检验）\n.estat firststage\n\n* 内生性检验（DWH / Hausman）\n.estat endogenous\n\n* 过度识别检验（多工具时）\n.estat overid",
+  r:"library(AER)\nm <- ivreg(Y ~ X1 + X2 | X1 + Z, data = d)\nsummary(m, diagnostics = TRUE)\n# 第一阶段 F（弱工具）\nf <- lm(X2 ~ X1 + Z, data = d)\ncar::linearHypothesis(f, \"Z\")\n# 面板/固定效应 2SLS\nlibrary(fixest)\nfeols(Y ~ X1 | id + time | X2 ~ Z, cluster = ~id, data = d)",
+  tests:["第一阶段 F 统计量（>10，Stock-Yogo 临界值）","过度识别检验（Sargan/Hansen J，多工具时）","内生性检验（DWH/Hausman）","工具外生性的理论论证与稳健性讨论","对 LATE 的解释范围说明"],
+  pits:["弱工具比 OLS 偏倚更严重（F<10 时不可用）","工具相关但并非外生（排除限制被违反）","恰好识别时外生性完全无法检验","IV 估计的是 complier 的 LATE，不一定是总体平均效应","工具数量过多且未做过度识别检验"],
+  rationale:"研究问题「{q}」的核心解释变量 {x} 可能存在内生性（遗漏变量、反向因果或测量误差）。工具变量方法通过寻找与内生变量强相关、但与扰动项不相关（仅通过内生变量影响 Y）的外生工具 Z，利用 2SLS 提取外生变异识别 {x} 的因果效应。实证中必须报告第一阶段 F 统计量以排除弱工具问题，并通过理论论证与过度识别检验支撑工具外生性；同时明确估计量对应的是顺从者（complier）的局部平均处理效应（LATE）。"
+},
+
+/* 14. PSM 倾向得分匹配 */
+psm:{
+  full:"倾向得分匹配（PSM，Propensity Score Matching）", cat:"causal",
+  intro:"通过估计个体接受处理的概率（倾向得分）对处理组与对照组进行匹配，缓解可观测变量造成的选择偏误。",
+  fit:{y:{continuous:0.9,binary:0.85,ordinal:0.5,count:0.55,multi:0.3}, x:{group2:1.0,continuous:0.3,policy:0.7,groupk:0.6}, d:{cross:0.95,balPanel:0.6,unbalPanel:0.6,repeat:0.65,experiment:0.5}, g:{desc:0.45,causal:0.95}},
+  pre:["处理变量为二分（处理/对照）","丰富的协变量（覆盖处理分配的影响因素）","共同支撑（倾向得分重叠）条件","条件独立假设（可观测混杂被控制，不可直接检验）"],
+  stata:"* 安装与估计\nssc install psmatch2\n.psmatch2 X, outcome(Y) neighbor(1) caliper(0.05) common\n\n* 平衡性检验\n.pstest X1 X2 X3, both\n\n* 匹配后回归（ATT 稳健性）\n.psmatch2 X, outcome(Y) neighbor(1) common\n.reg Y X1 X2 [iweight=_weight], vce(robust)\n\n* 最近邻/核匹配可切换方法",
+  r:"library(MatchIt)\n# 最近邻匹配\nm <- matchit(X ~ X1 + X2 + X3, data = d, method = \"nearest\",\n             distance = \"glm\", caliper = 0.05)\nmd <- match.data(m)\n# 平衡性诊断（标准化差异）\nsummary(m)\n# 匹配后回归\nlm(Y ~ X + X1 + X2, data = md, weights = weights)\n# 协变量平衡\ncobalt::bal.tab(m)",
+  tests:["匹配后协变量平衡（标准化差异 |d|<0.1）","共同支撑（倾向得分重叠区域）","倾向得分分布可视化","与回归估计结果对比的稳健性","Rosenbaum 敏感度分析（未观测混杂）"],
+  pits:["PSM 只能缓解可观测混杂，未观测混杂仍导致偏倚","「PSM 后 p 不显著=处理无效」是错误观念","共同支撑不足时强行匹配","过度匹配或最近邻放回导致样本重复使用","把 PSM 当万能因果工具（建议与 DID 等结合）"],
+  rationale:"处理变量 {x} 的分配可能存在选择偏误（个体自选择接受处理）。倾向得分匹配以协变量估计个体接受处理的概率，将处理组与对照组按倾向得分进行匹配，在条件独立假定（可观测混杂被控制）下重建近似随机化的比较基础，用于估计平均处理效应。论文中应报告匹配后协变量平衡（标准化差异）与共同支撑范围，并结合 Rosenbaum 敏感度分析讨论未观测混杂的影响；横截面数据下这是应对选择偏误的常用策略。"
+},
+
+/* 15. SCM 合成控制法 */
+scm:{
+  full:"合成控制法（SCM，Synthetic Control Method）", cat:"causal",
+  intro:"为单个（或少数）处理单元构造由多个对照单元加权合成的反事实轨迹，适用于只有一个试点地区/单位的政策评估。",
+  fit:{y:{continuous:0.95,binary:0.7,ordinal:0.4,count:0.5,multi:0.2}, x:{group2:0.5,continuous:0.3,policy:0.9,groupk:0.3}, d:{cross:0.3,balPanel:0.95,unbalPanel:0.85,repeat:0.75,experiment:0.3}, g:{desc:0.4,causal:1.0}},
+  pre:["单一（或极少数）处理单元","足够多的对照单元（donor pool）","较长的政策前时期（通常 ≥10 期）","政策前处理单元与合成对照拟合良好（低 pre-MSPE）"],
+  stata:"* 安装\nssc install synth\n.synth Y Y(2000(1)2008) X1 X2, trunit(1) trperiod(2009)\n\n* 安慰剂推断（permutation test）\nssc install synth_runner\n.synth_runner Y Y(2000(1)2008) X1 X2, trunit(1) trperiod(2009) gen_vars",
+  r:"library(tidysynth)\nsynth <- d |> tidysynth::new_synth() |>\n  generate_predictor(mean(Y), Y ~ 2000:2008) |>\n  generate_control(unit, time, Y, 2000:2008) |>\n  generate_weights(optimization = \"Nelder-Mead\") |>\n  generate_control()\n# 安慰剂检验\nsynth |> placebo_test()\n# 政策前拟合优度（pre-MSPE）\nsynth |> plot_trends()",
+  tests:["政策前均方预测误差（pre-MSPE，越小越好）","安慰剂检验 / 置换检验 p 值","权重是否集中于少数对照单元","处理单元与对照池的协变量可比性","政策前结果轨迹的拟合可视化"],
+  pits:["对照单元过少或权重极端导致合成质量差","政策前拟合差（pre-MSPE 大）时结果不可信","仅适用于单个（或极少数）处理单元，推广有限","过度解读外部效度","未做安慰剂/置换检验就下结论"],
+  rationale:"研究涉及 {x} 的单一处理单元（如某试点地区）政策效应，且数据结构为{d}。合成控制法从多个未受政策影响的对照单元中数据驱动地加权构造「合成」对照组，使政策前结果轨迹与处理单元高度吻合，进而以政策后实际值与合成值之差估计处理效应。相比简单的前后比较或主观选对照，SCM 缓解了对照选择的随意性，并可通过安慰剂（置换）检验进行统计推断；论文中应报告政策前拟合（pre-MSPE）与安慰剂检验结果。"
+}
+
+};
+
+/* ========== 1. 上下文关键词识别 ========== */
+function flags(ctx){
+  var t = (ctx.question || "") + " " + (ctx.extra || "");
+  return {
+    policy:    /政策|冲击|试点|改革|实施|执行|干预|新政|法案|制度|上调|下调|推行|出台/.test(t),
+    threshold: /断点|阈值|分数线|门槛|临界|截止|划线|达到|跳跃|附近/.test(t),
+    endo:      /内生|遗漏变量|反向因果|逆向因果|测量误差|同时性|混淆因素/.test(t),
+    instrument:/工具变量|外生变量|作为工具|工具性/.test(t),
+    selection: /选择偏误|自选择|选择性|匹配|样本选择|样本偏差|选择效应/.test(t),
+    synthetic: /合成|单个地区|单一试点|唯一试点|单个省|一个地区|唯一处理|一个城市|单个城市/.test(t),
+    pairedKw:  /前后|配对|重复测量|同一批|跟踪|追踪|两次测量|干预前后|前后测/.test(t),
+    normalKw:  /不满足正态|非正态|偏态|离群|重尾|分布严重偏/.test(t),
+    meanKw:    /均值|平均|差异|显著不同|是否有别|比较/.test(t),
+    influKw:   /影响|相关|作用|因素|决定|预测|效应/.test(t)
+  };
+}
+
+/* ========== 2. 四维组合评分（0-100） ========== */
+function scoreMethod(key, ctx, f){
+  var m = KB[key], fit = m.fit, n = ctx.n;
+  var s = 100 * (0.40*fit.y[ctx.y] + 0.25*fit.x[ctx.x] + 0.15*fit.d[ctx.data] + 0.20*fit.g[ctx.goal]);
+
+  /* 硬性门控：防止“数据像就能用” */
+  if(key === "did"){
+    if(ctx.data === "cross" && (f.policy || ctx.goal === "causal")) s *= 0.08;
+    else if(ctx.data === "cross") s *= 0.30;
+  }
+  if(key === "rd"  && !f.threshold) s *= 0.55;
+  if(key === "iv"  && !(f.endo || f.instrument)) s *= 0.55;
+  if(key === "psm" && !f.selection) s *= 0.60;
+  if(key === "scm"){
+    if(!f.synthetic) s *= 0.60;
+    if(!(ctx.data === "balPanel" || ctx.data === "unbalPanel" || ctx.data === "repeat")) s *= 0.45;
+  }
+
+  /* 上下文加分（信号越强越优先） */
+  if(key === "did" && f.policy && (ctx.data === "balPanel" || ctx.data === "unbalPanel" || ctx.data === "repeat")) s += 10;
+  if(key === "rd" && f.threshold) s += 18;
+  if(key === "iv"){ if(f.endo) s += 10; if(f.instrument) s += 12; }
+  if(key === "psm" && f.selection) s += 16;
+  if(key === "scm" && f.synthetic) s += 15;
+  if(key === "paired" && f.pairedKw) s += 15;
+  if(key === "nonpara"){ if(f.normalKw) s += 12; if(n && n < 50) s += 12; else if(n && n < 100) s += 6; }
+  if(key === "ttest"){ if(f.meanKw) s += 8; if(n && n < 50) s += 5; }
+  if(key === "ols" && f.influKw) s += 8;
+  if(key === "ologit" && ctx.y === "ordinal") s += 6;
+
+  /* 小样本调整 */
+  if(n && n < 50){ if(key === "logit" || key === "ologit" || key === "mlogit") s -= 12; if(key === "rd" || key === "iv") s -= 10; if(key === "scm") s -= 8; }
+  if(n && n < 100){ if(key === "mlogit" || key === "ologit") s -= 5; if(key === "rd") s -= 5; }
+
+  return Math.max(0, Math.min(100, Math.round(s)));
+}
+
+/* ========== 3. 典型误用识别（不推荐列表） ========== */
+function detectMisuses(ctx, scores){
+  var out = [], f = flags(ctx);
+  function add(k, r){ if(!out.some(function(x){ return x.k === k; })) out.push({k:k, r:r}); }
+
+  /* 纯横截面用 DID（存在阈值断点设计时属 RD 范畴，不提示） */
+  if(ctx.data === "cross" && !f.threshold && (f.policy || scores.did >= 55))
+    add("did", "纯横截面数据只有单一时间点，没有政策前后的时间维度，无法构造双重差分，识别无效。");
+  /* 二元 Y 直接用 OLS */
+  if(ctx.y === "binary")
+    add("ols", "因变量为二元 0/1，直接用 OLS（线性概率模型）会出现预测概率越出 [0,1]、异方差、误差非正态等问题，应改用 logit/probit。");
+  /* 因果目标却只做简单检验 */
+  if(ctx.goal === "causal" && ctx.data !== "experiment"){
+    if(scores.ttest >= 50)  add("ttest",  "因果目标下仅比较两组均值（t 检验）无法控制混杂变量，不能支撑因果性结论；应借助回归控制、IV、DID、RD 或实验设计。");
+    if(scores.chisq >= 50)  add("chisq",  "因果目标下卡方检验仅描述分类变量间的关联，无法排除混杂与反向因果，不能用于因果推断。");
+    if(scores.anova >= 50)  add("anova",  "因果目标下 ANOVA 仅检验组间均值差异，未控制协变量与选择机制，难以识别因果效应。");
+    if(scores.nonpara >= 50)add("nonpara","因果目标下秩和检验只比较分布位置，无法处理混杂，不能支持因果结论。");
+  }
+  /* 有序 Y 误用 ANOVA */
+  if(ctx.y === "ordinal")
+    add("anova", "因变量为有序分类（等级测量），ANOVA 将等级视为等距连续量，违反测量假设，应改用有序 logit 或秩和检验。");
+  /* 计数 Y 误用 OLS */
+  if(ctx.y === "count")
+    add("ols", "计数因变量（非负整数、右偏）用 OLS 会产生负预测值与无效推断，应改用泊松/负二项回归。");
+  /* 多分类 Y 误用二元 logit */
+  if(ctx.y === "multi")
+    add("logit", "因变量为多分类无序变量，二元 logit/probit 只能处理 0/1 结果，应改用多元 logit（mlogit）。");
+  /* 连续 Y 误用卡方 */
+  if(ctx.y === "continuous")
+    add("chisq", "因变量为连续变量，卡方检验针对分类频数，会丢弃大部分信息，应改用 t 检验/ANOVA/回归。");
+  /* 面板/重复截面却用独立样本检验 */
+  if(ctx.data === "balPanel" || ctx.data === "unbalPanel" || ctx.data === "repeat"){
+    if(scores.ttest >= 50) add("ttest", "面板/重复截面数据存在个体内相关性与时间维度，独立样本 t 检验的独立性假设被违反，应使用固定效应模型或 DID。");
+    if(scores.chisq >= 50) add("chisq", "面板/重复截面数据用卡方检验忽略了个体内部相关性与时间信息。");
+  }
+  /* 政策冲击 + 因果目标 + 横截面（RD/IV 等准实验设计属例外） */
+  if(f.policy && ctx.goal === "causal" && ctx.data === "cross" && !f.threshold && !f.instrument)
+    add("did", "评估政策因果效应需要面板或重复截面数据（或 IV/RD 等准实验设计），当前横截面数据无法排除政策前趋势与选择偏误。");
+  /* 存在内生性时 OLS 不宜作主估计量 */
+  if(f.endo && ctx.goal === "causal")
+    add("ols", "研究情境存在内生性（遗漏变量/反向因果等）时，OLS 估计有偏且不一致，作为主估计量需要 IV（工具需满足相关性与外生性）或准实验设计。");
+
+  return out;
+}
+
+/* ========== 4. 推荐方法选择（不同类别、得分相近） ========== */
+function recommend(ctx, scores, misuseKeys){
+  var ranked = Object.keys(KB)
+    .filter(function(k){ return misuseKeys.indexOf(k) === -1; })
+    .map(function(k){ return {k:k, s:scores[k]}; })
+    .filter(function(x){ return x.s >= 45; })
+    .sort(function(a,b){ return b.s - a.s; });
+  var picks = [];
+  if(ranked.length){
+    var top = ranked[0]; picks.push(top);
+    for(var i = 1; i < ranked.length; i++){
+      var r = ranked[i];
+      if(r.s < top.s - 12) break;
+      if(KB[r.k].cat !== KB[top.k].cat){ picks.push(r); break; }
+    }
+    if(picks.length === 1 && ranked.length > 1 && ranked[1].s >= top.s - 5) picks.push(ranked[1]);
+  }
+  return {picks:picks, ranked:ranked};
+}
+
+/* ========== 5. 工具函数 ========== */
+function esc(s){
+  return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function buildRationale(key, ctx){
+  return KB[key].rationale
+    .replace("{q}", ctx.question)
+    .replace("{y}", YN[ctx.y])
+    .replace("{x}", XN[ctx.x])
+    .replace("{d}", DN[ctx.data])
+    .replace("{g}", GN[ctx.goal]);
+}
+
+/* ========== 6. 分析主流程 ========== */
+var lastText = "";
+
+function run(){
+  var question = document.getElementById("f_question").value.trim();
+  if(!question){ alert("请填写核心研究问题"); return; }
+  var nv = parseInt(document.getElementById("f_n").value, 10);
+  var ctx = {
+    question: question,
+    y: document.getElementById("f_y").value,
+    x: document.getElementById("f_x").value,
+    goal: document.querySelector('input[name="goal"]:checked').value,
+    data: document.getElementById("f_data").value,
+    n: (isNaN(nv) || nv <= 0) ? null : nv,
+    extra: document.getElementById("f_extra").value.trim()
+  };
+  var f = flags(ctx);
+  var scores = {};
+  Object.keys(KB).forEach(function(k){ scores[k] = scoreMethod(k, ctx, f); });
+  var misuses = detectMisuses(ctx, scores);
+  var misuseKeys = misuses.map(function(x){ return x.k; });
+  var rec = recommend(ctx, scores, misuseKeys);
+  render(ctx, misuses, rec);
+}
+
+function render(ctx, misuses, rec){
+  var picks = rec.picks;
+  var hasCausalPick = picks.some(function(p){ return KB[p.k].cat === "causal"; });
+  var needCausalWarn = ctx.goal === "causal" && !hasCausalPick && ctx.data !== "experiment";
+  var h = "";
+
+  h += '<div class="result-head"><h2>分析结果</h2><button class="btn btn-mini" id="btn_copy">一键复制为纯文本</button></div>';
+  h += '<div class="meta-line">研究问题：<b>' + esc(ctx.question) + '</b><br>因变量：<b>' + YN[ctx.y] + '</b> ｜ 自变量：<b>' + XN[ctx.x] + '</b> ｜ 研究目标：<b>' + GN[ctx.goal] + '</b> ｜ 数据结构：<b>' + DN[ctx.data] + '</b> ｜ 样本量：<b>' + (ctx.n ? ctx.n : "未填写") + '</b></div>';
+
+  /* 模块 1：优先推荐 */
+  h += '<div class="mod"><h3><span class="no">1</span> ✅ 优先推荐方法</h3>';
+  if(picks.length === 0){
+    h += '<p>当前输入组合下没有高度匹配的方法（得分均低于阈值）。建议：</p><ul>'
+      + '<li>核对变量类型与数据结构是否填写正确；</li>'
+      + '<li>补充内生性、断点、选择偏误等关键信息；</li>'
+      + '<li>重新审视研究设计，或咨询计量/统计专家。</li></ul>';
+  } else {
+    picks.forEach(function(p){
+      var m = KB[p.k];
+      h += '<div class="rec-item">'
+        + '<div class="r-top"><span class="r-name">' + esc(m.full) + '</span><span class="r-cat">' + CATN[m.cat] + '</span></div>'
+        + '<div class="r-intro">' + esc(m.intro) + '</div>'
+        + '<div class="score-label">匹配度 ' + p.s + ' / 100</div>'
+        + '<div class="scorebar"><i style="width:' + p.s + '%"></i></div>'
+        + '<h4>适用前提</h4><ul class="pre">' + m.pre.map(function(x){ return "<li>" + esc(x) + "</li>"; }).join("") + '</ul>'
+        + '</div>';
+    });
+  }
+  h += '</div>';
+
+  /* 模块 2：不建议选用 */
+  h += '<div class="mod"><h3><span class="no">2</span> ❌ 不建议选用方法</h3>';
+  if(misuses.length === 0){
+    h += '<p>未发现明显的方法误用；仍需注意所选方法的适用前提与关键检验。</p>';
+  } else {
+    misuses.forEach(function(mu){
+      h += '<div class="bad"><span class="nm">' + esc(KB[mu.k].full) + '</span><span class="wy">' + esc(mu.r) + '</span></div>';
+    });
+  }
+  h += '</div>';
+
+  /* 模块 3：选择理由 */
+  h += '<div class="mod"><h3><span class="no">3</span> 📖 选择理由（论文方法论素材）</h3>';
+  picks.forEach(function(p){ h += '<p>' + esc(buildRationale(p.k, ctx)) + '</p>'; });
+  if(picks.length === 0) h += '<p>请补充研究设计信息后重新分析。</p>';
+  if(needCausalWarn){
+    h += '<div class="warn-note">⚠️ 提示：当前推荐以相关/组间比较为主；若论文目标为严格因果识别，建议补充准实验设计（DID、IV、RD、PSM、SCM 等）或寻找随机化数据来源。</div>';
+  }
+  h += '</div>';
+
+  /* 模块 4：实操步骤 */
+  h += '<div class="mod"><h3><span class="no">4</span> 🛠️ 实操简要步骤（Stata / R）</h3>';
+  picks.forEach(function(p){
+    var m = KB[p.k];
+    h += '<p><b>' + esc(m.full) + '</b></p>'
+      + '<p><b>Stata 操作流程：</b></p><pre>' + esc(m.stata) + '</pre>'
+      + '<p><b>R 操作流程：</b></p><pre>' + esc(m.r) + '</pre>'
+      + '<p><b>关键检验：</b></p><ul>' + m.tests.map(function(t){ return "<li>" + esc(t) + "</li>"; }).join("") + '</ul>';
+  });
+  if(picks.length === 0) h += '<p>无推荐方法，暂无可提供的操作步骤。</p>';
+  h += '</div>';
+
+  /* 模块 5：常见误区 */
+  h += '<div class="mod"><h3><span class="no">5</span> ⚠️ 常见误区</h3><ul>';
+  var shown = 0;
+  picks.forEach(function(p){
+    KB[p.k].pits.forEach(function(pt){ if(shown < 5){ h += "<li>" + esc(pt) + "</li>"; shown++; } });
+  });
+  if(shown === 0) h += "<li>无推荐方法，暂无常见误区提示。</li>";
+  h += '</ul></div>';
+
+  h += '<div class="note">本工具仅为辅助参考，正式论文仍需结合前沿文献与审稿人意见进行最终判断。</div>';
+
+  document.getElementById("results").innerHTML = h;
+  lastText = buildText(ctx, misuses, rec);
+  document.getElementById("btn_copy").addEventListener("click", copyResult);
+  document.getElementById("results").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+/* ========== 7. 纯文本输出（论文可粘贴） ========== */
+function buildText(ctx, misuses, rec){
+  var L = [];
+  L.push("【社科量化研究方法智能选型 · 分析结果】");
+  L.push("研究问题：" + ctx.question);
+  L.push("因变量：" + YN[ctx.y] + " ｜ 自变量：" + XN[ctx.x] + " ｜ 研究目标：" + GN[ctx.goal] + " ｜ 数据结构：" + DN[ctx.data] + " ｜ 样本量：" + (ctx.n ? ctx.n : "未填写"));
+  L.push("");
+  L.push("一、优先推荐方法");
+  if(rec.picks.length === 0){ L.push("当前输入组合下无高度匹配的方法，请核对输入或咨询统计专家。"); }
+  rec.picks.forEach(function(p){
+    var m = KB[p.k];
+    L.push("• " + m.full + "（" + CATN[m.cat] + "，匹配度 " + p.s + "/100）");
+    L.push("  简介：" + m.intro);
+    L.push("  适用前提：" + m.pre.join("；"));
+  });
+  L.push("");
+  L.push("二、不建议选用方法");
+  if(misuses.length === 0){ L.push("未发现明显的方法误用；仍需注意所选方法的适用前提。"); }
+  misuses.forEach(function(mu){ L.push("• " + KB[mu.k].full + "：" + mu.r); });
+  L.push("");
+  L.push("三、选择理由");
+  rec.picks.forEach(function(p){ L.push(buildRationale(p.k, ctx)); });
+  L.push("");
+  L.push("四、实操简要步骤");
+  rec.picks.forEach(function(p){
+    var m = KB[p.k];
+    L.push("【" + m.full + "】");
+    L.push("Stata 操作流程：");
+    L.push(m.stata);
+    L.push("R 操作流程：");
+    L.push(m.r);
+    L.push("关键检验：" + m.tests.join("；"));
+  });
+  L.push("");
+  L.push("五、常见误区");
+  var shown = 0;
+  rec.picks.forEach(function(p){
+    KB[p.k].pits.forEach(function(pt){ if(shown < 5){ L.push("• " + pt); shown++; } });
+  });
+  if(shown === 0) L.push("暂无。");
+  L.push("");
+  L.push("备注：本工具仅为辅助参考，正式论文仍需结合文献与审稿人意见。");
+  return L.join("\n");
+}
+
+function copyResult(){
+  if(!lastText) return;
+  var done = function(){
+    var b = document.getElementById("btn_copy");
+    if(!b) return;
+    b.textContent = "已复制";
+    setTimeout(function(){ b.textContent = "一键复制为纯文本"; }, 1500);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(lastText).then(done).catch(function(){ fallbackCopy(lastText, done); });
+  } else {
+    fallbackCopy(lastText, done);
+  }
+}
+function fallbackCopy(t, done){
+  var ta = document.createElement("textarea");
+  ta.value = t;
+  ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try{ document.execCommand("copy"); }catch(e){}
+  document.body.removeChild(ta);
+  done();
+}
+
+/* ========== 8. 示例与初始化 ========== */
+function fillExample(){
+  document.getElementById("f_question").value = "某市于 2019 年实施最低工资标准上调政策，本研究考察该政策对个体是否就业（二元 0/1）的影响。";
+  document.getElementById("f_y").value = "binary";
+  document.getElementById("f_x").value = "policy";
+  var radios = document.querySelectorAll('input[name="goal"]');
+  radios[1].checked = true;
+  document.getElementById("f_data").value = "balPanel";
+  document.getElementById("f_n").value = "12000";
+  document.getElementById("f_extra").value = "处理组为受政策影响较大的低技能劳动者，对照组为未受影响行业职工；需要检验平行趋势，存在交错处理时点，标准误聚类到企业层面。";
+}
+
+(function init(){
+  document.getElementById("results").innerHTML =
+    '<div class="result-placeholder"><div class="big">📊</div>'
+    + '填写左侧表单并点击「开始分析」，<br>系统将基于 因变量 × 自变量 × 研究目标 × 数据结构 四维组合<br>'
+    + '对 15 种量化/计量方法逐一评分（0-100）并给出推荐、理由与操作步骤。</div>';
+  document.getElementById("btn_run").addEventListener("click", run);
+  document.getElementById("btn_example").addEventListener("click", fillExample);
+})();
+</script>
+</body>
+</html>
+
+
+
+
